@@ -93,9 +93,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         .updateProfiles(me: me, partner: partner);
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Details Updated!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Details Updated!'),
+          duration: Duration(milliseconds: 1500),
+        ),
+      );
       context.pop();
     }
   }

@@ -471,6 +471,7 @@ class _ProfileFormState extends State<_ProfileForm> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text("Please fill all required fields (*)"),
+                        duration: Duration(milliseconds: 1500),
                       ),
                     );
                   },

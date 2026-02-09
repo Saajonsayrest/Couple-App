@@ -8,6 +8,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.widget.RemoteViews
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
 class CoupleWidget : AppWidgetProvider() {
@@ -41,15 +45,27 @@ class CoupleWidget : AppWidgetProvider() {
                         // Get data from Flutter
                         val name1 = widgetData.getString("name1", "") ?: ""
                         val name2 = widgetData.getString("name2", "") ?: ""
-                        val startDate = widgetData.getLong("startDate", 0)
+                        val startDateMillis = widgetData.getLong("startDate", 0)
 
-                        // Calculate days dynamically if startDate is available
+                        // Calculate days dynamically if startDate is available using LocalDate for
+                        // accuracy
                         val displayDays =
-                                if (startDate > 0) {
-                                        val now = System.currentTimeMillis()
-                                        val diff = now - startDate
-                                        val daysCount = (diff / (1000 * 60 * 60 * 24)) + 1
-                                        daysCount.toString()
+                                if (startDateMillis > 0) {
+                                        try {
+                                                val startLocalDate =
+                                                        Instant.ofEpochMilli(startDateMillis)
+                                                                .atZone(ZoneId.systemDefault())
+                                                                .toLocalDate()
+                                                val nowLocalDate = LocalDate.now()
+                                                val daysCount =
+                                                        ChronoUnit.DAYS.between(
+                                                                startLocalDate,
+                                                                nowLocalDate
+                                                        ) + 1
+                                                daysCount.toString()
+                                        } catch (e: Exception) {
+                                                widgetData.getString("days", "—") ?: "—"
+                                        }
                                 } else {
                                         // Fallback to static data if new app hasn't run yet
                                         widgetData.getString("days", "—") ?: "—"

@@ -42,7 +42,14 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
 
   void _updateHomeWidget(UserProfile me, UserProfile partner) {
     final startDate = me.relationshipStartDate ?? DateTime.now();
-    final days = DateTime.now().difference(startDate).inDays + 1;
+    // Normalize to midnight for consistent day counting
+    final normalizedStart = DateTime(
+      startDate.year,
+      startDate.month,
+      startDate.day,
+    );
+
+    final days = DateTime.now().difference(normalizedStart).inDays + 1;
 
     final name1 = me.nickname.isNotEmpty ? me.nickname : me.name;
     final name2 = partner.nickname.isNotEmpty ? partner.nickname : partner.name;
@@ -52,7 +59,7 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     HomeWidget.saveWidgetData<String>('days', days.toString());
     HomeWidget.saveWidgetData<int>(
       'startDate',
-      startDate.millisecondsSinceEpoch,
+      normalizedStart.millisecondsSinceEpoch,
     );
     HomeWidget.updateWidget(name: 'CoupleWidget', androidName: 'CoupleWidget');
   }

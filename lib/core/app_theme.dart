@@ -207,6 +207,16 @@ class AppTheme {
           ),
         ),
       ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: palette.surface,
+        contentTextStyle: GoogleFonts.quicksand(
+          color: palette.primary,
+          fontWeight: FontWeight.bold,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 10,
+      ),
     );
   }
 }

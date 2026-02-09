@@ -500,12 +500,8 @@ class HomeScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: Icon(
-              Icons.check_circle_outline_rounded,
-              color: color.withOpacity(0.3),
-            ),
-            onPressed: () async {
+          GestureDetector(
+            onTap: () async {
               reminder.isCompleted = true;
               final box = Hive.box(AppConstants.remindersBox);
               final key = box.keys.firstWhere(
@@ -518,6 +514,26 @@ class HomeScreen extends ConsumerWidget {
               await box.delete(key);
               await NotificationService().cancelReminder(reminder.id);
             },
+            child: Container(
+              margin: const EdgeInsets.only(right: 16, left: 4),
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                shape: BoxShape.circle,
+                border: Border.all(color: color.withOpacity(0.35), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(Icons.check_rounded, size: 18, color: color),
+              ),
+            ),
           ),
           Expanded(
             child: Column(
