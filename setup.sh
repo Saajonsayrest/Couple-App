@@ -69,3 +69,7 @@ echo "🎉 All done!"
 adb kill-server
 adb start-server
 adbwire
+
+flutter clean
+flutter pub get
+flutter build appbundle --release
