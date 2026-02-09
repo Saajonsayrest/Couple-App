@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:upgrader/upgrader.dart';
 import 'core/app_theme.dart';
 import 'core/constants.dart';
 import 'providers/theme_provider.dart';
 import 'routes/app_router.dart';
 import 'services/notification_service.dart';
+import 'services/app_update_service.dart';
 
 import 'data/models/user_profile.dart';
 
@@ -31,18 +34,50 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  final AppUpdateService _updateService = AppUpdateService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for native updates (mostly Android)
+    _updateService.checkForUpdate();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeType = ref.watch(themeProvider);
+    // router is imported globally from routes/app_router.dart
 
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getTheme(themeType),
       routerConfig: router,
+      builder: (context, child) {
+        // UpgradeAlert handles iOS store updates & Android fallback
+        // Forcing latest version: showIgnore=false, showLater=false
+        return UpgradeAlert(
+          upgrader: Upgrader(
+            debugLogging: false,
+            // duration: const Duration(days: 0), // check immediately
+          ),
+          showIgnore: false,
+          showLater: false,
+          showReleaseNotes: true,
+          dialogStyle: Platform.isIOS
+              ? UpgradeDialogStyle.cupertino
+              : UpgradeDialogStyle.material,
+          child: child ?? const SizedBox(),
+        );
+      },
     );
   }
 }
