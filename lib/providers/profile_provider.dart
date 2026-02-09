@@ -54,8 +54,14 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     final name1 = me.nickname.isNotEmpty ? me.nickname : me.name;
     final name2 = partner.nickname.isNotEmpty ? partner.nickname : partner.name;
 
+    // Get first letter for initials
+    final initial1 = name1.isNotEmpty ? name1[0].toUpperCase() : '?';
+    final initial2 = name2.isNotEmpty ? name2[0].toUpperCase() : '?';
+
     HomeWidget.saveWidgetData<String>('name1', name1);
     HomeWidget.saveWidgetData<String>('name2', name2);
+    HomeWidget.saveWidgetData<String>('initial1', initial1);
+    HomeWidget.saveWidgetData<String>('initial2', initial2);
     HomeWidget.saveWidgetData<String>('days', days.toString());
     HomeWidget.saveWidgetData<int>(
       'startDate',
@@ -72,6 +78,8 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     // Clear Widget Data
     HomeWidget.saveWidgetData('name1', null);
     HomeWidget.saveWidgetData('name2', null);
+    HomeWidget.saveWidgetData('initial1', null);
+    HomeWidget.saveWidgetData('initial2', null);
     HomeWidget.saveWidgetData('days', null);
     HomeWidget.saveWidgetData('startDate', null);
     HomeWidget.updateWidget(name: 'CoupleWidget', androidName: 'CoupleWidget');
