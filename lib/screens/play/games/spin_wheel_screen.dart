@@ -105,64 +105,66 @@ class _SpinWheelScreenState extends State<SpinWheelScreen>
         child: Column(
           children: [
             // Category Selector (Horizontal)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: _categories.entries.map((entry) {
-                  final isSelected = _selectedCategory == entry.key;
-                  return GestureDetector(
-                    onTap: () => setState(() {
-                      _selectedCategory = entry.key;
-                      _result = '';
-                      _finalAngle = 0;
-                      _baseAngle = 0;
-                      _isSpinning = false;
-                      _selectedIndex = 0;
-                      _controller.reset();
-                    }),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
+            // Category Selector (2x2 Grid)
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 3.2,
+              children: _categories.entries.map((entry) {
+                final isSelected = _selectedCategory == entry.key;
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    _selectedCategory = entry.key;
+                    _result = '';
+                    _finalAngle = 0;
+                    _baseAngle = 0;
+                    _isSpinning = false;
+                    _selectedIndex = 0;
+                    _controller.reset();
+                  }),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Theme.of(context).primaryColor
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        if (isSelected)
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                      ],
+                      border: Border.all(
                         color: isSelected
                             ? Theme.of(context).primaryColor
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(25),
-                        boxShadow: [
-                          if (isSelected)
-                            BoxShadow(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                        ],
-                        border: Border.all(
-                          color: isSelected
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey.withOpacity(0.2),
-                        ),
+                            : Colors.grey.withOpacity(0.2),
                       ),
+                    ),
+                    child: Center(
                       child: Text(
                         entry.value,
-                        style: TextStyle(
+                        style: GoogleFonts.varelaRound(
                           color: isSelected
                               ? Colors.white
                               : Colors.grey.shade700,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 24),
 
