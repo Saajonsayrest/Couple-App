@@ -105,6 +105,64 @@ class NotificationService {
     );
   }
 
+  Future<void> scheduleAnnualEvent({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime date,
+  }) async {
+    final now = tz.TZDateTime.now(tz.local);
+
+    // Construct the next occurrence at 12:00 AM (00:00)
+    tz.TZDateTime scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      date.month,
+      date.day,
+      0,
+      0,
+      0,
+    );
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year + 1,
+        date.month,
+        date.day,
+        0,
+        0,
+        0,
+      );
+    }
+
+    await _notificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'special_events_channel',
+          'Special Events',
+          channelDescription: 'Birthdays and Anniversaries',
+          importance: Importance.max,
+          priority: Priority.high,
+          styleInformation: BigTextStyleInformation(''),
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: true,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+    );
+  }
+
   Future<void> cancelReminder(String reminderId) async {
     await _notificationsPlugin.cancel(reminderId.hashCode & 0x7FFFFFFF);
   }

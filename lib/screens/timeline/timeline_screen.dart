@@ -347,8 +347,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
 
               return ListView.builder(
                 padding: EdgeInsets.only(
-                  left: 20,
-                  right: 20,
+                  left: 12,
+                  right: 12,
                   top: 24,
                   bottom: MediaQuery.of(context).padding.bottom + 120,
                 ),
@@ -468,7 +468,7 @@ class _TimelineItem extends StatelessWidget {
           right: 0,
           child: Center(
             child: SizedBox(
-              width: 40,
+              width: 24,
               child: Column(
                 children: [
                   Container(
@@ -520,7 +520,7 @@ class _TimelineItem extends StatelessWidget {
                       )
                     : const SizedBox(),
               ),
-              const SizedBox(width: 40),
+              const SizedBox(width: 24),
               Expanded(
                 child: !isLeft
                     ? _ContentCard(
@@ -561,7 +561,7 @@ class _ContentCard extends StatelessWidget {
       onLongPress: onDelete,
       onTap: onEdit,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
@@ -579,17 +579,16 @@ class _ContentCard extends StatelessWidget {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(
+                Expanded(
                   child: Text(
                     DateFormat('MMM dd, yyyy').format(event.date),
                     style: GoogleFonts.outfit(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textSub,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (dayCount != null) ...[
@@ -597,7 +596,7 @@ class _ContentCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 3,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.12),
@@ -606,7 +605,7 @@ class _ContentCard extends StatelessWidget {
                     child: Text(
                       'Day $dayCount',
                       style: GoogleFonts.outfit(
-                        fontSize: 9,
+                        fontSize: 10,
                         fontWeight: FontWeight.w900,
                         color: color,
                       ),
@@ -615,30 +614,62 @@ class _ContentCard extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               event.title,
               style: GoogleFonts.outfit(
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textMain,
                 height: 1.2,
               ),
             ),
             if (event.body.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 event.body,
                 style: GoogleFonts.outfit(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: AppColors.textSub,
                   height: 1.4,
                 ),
-                maxLines: 4,
+                maxLines: 10,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
+            if (onEdit != null || onDelete != null) ...[
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (onEdit != null)
+                    _buildIcon(Icons.edit_rounded, Colors.blue, onEdit!),
+                  if (onDelete != null) ...[
+                    const SizedBox(width: 12),
+                    _buildIcon(Icons.delete_rounded, Colors.red, onDelete!),
+                  ],
+                ],
+              ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIcon(IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 18, color: color),
         ),
       ),
     );
