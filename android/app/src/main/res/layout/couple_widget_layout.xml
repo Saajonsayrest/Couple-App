@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingTop="24dp"
+    android:paddingBottom="24dp"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:background="@drawable/widget_background">
+
+    <!-- Avatars Row with Heart -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Avatar 1 with white border -->
+        <FrameLayout
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:background="@drawable/avatar_white_circle">
+
+            <TextView
+                android:id="@+id/widget_initial1"
+                android:layout_width="67dp"
+                android:layout_height="67dp"
+                android:layout_gravity="center"
+                android:background="@drawable/avatar_bg_1"
+                android:gravity="center"
+                android:text="A"
+                android:textColor="#FF6B6B"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Heart Icon with line -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/heart_icon"
+                android:textColor="#FF595E"
+                android:textSize="28sp" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/heart_line_bg" />
+
+        </LinearLayout>
+
+        <!-- Avatar 2 with white border -->
+        <FrameLayout
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:background="@drawable/avatar_white_circle">
+
+            <TextView
+                android:id="@+id/widget_initial2"
+                android:layout_width="67dp"
+                android:layout_height="67dp"
+                android:layout_gravity="center"
+                android:background="@drawable/avatar_bg_2"
+                android:gravity="center"
+                android:text="B"
+                android:textColor="#4ECDC4"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Names -->
+    <TextView
+        android:id="@+id/widget_names"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="A &amp; B"
+        android:textColor="#1A1A1A"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Counter Area -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Large Day Counter -->
+        <TextView
+            android:id="@+id/widget_days"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textColor="#FF6B6B"
+            android:textSize="56sp"
+            android:textStyle="bold" />
+
+        <!-- Days Together Pill -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/days_pill_bg"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="Days Together"
+            android:textColor="#FF6B6B"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>
+

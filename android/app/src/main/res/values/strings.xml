@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Couple App</string>
+    <string name="widget_description">Couple App - Days Together</string>
+    <string name="heart_icon">\u2764\uFE0F</string>
+</resources>
