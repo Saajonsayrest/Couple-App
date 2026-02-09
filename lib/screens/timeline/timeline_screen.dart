@@ -9,6 +9,7 @@ import '../../core/app_theme.dart';
 import '../../core/constants.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/timeline_event.dart';
+import '../../providers/profile_provider.dart';
 
 class TimelineScreen extends ConsumerStatefulWidget {
   const TimelineScreen({super.key});
@@ -19,13 +20,11 @@ class TimelineScreen extends ConsumerStatefulWidget {
 
 class _TimelineScreenState extends ConsumerState<TimelineScreen> {
   late Box _timelineBox;
-  late Box<UserProfile> _userBox;
 
   @override
   void initState() {
     super.initState();
     _timelineBox = Hive.box(AppConstants.timelineBox);
-    _userBox = Hive.box<UserProfile>(AppConstants.userBox);
   }
 
   List<TimelineEvent> _processEvents(UserProfile me, UserProfile partner) {
@@ -143,119 +142,124 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  eventToEdit == null
-                      ? 'Capture a Memory 📸'
-                      : 'Update Memory 📝',
-                  style: GoogleFonts.varelaRound(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMain,
+                  const SizedBox(height: 24),
+                  Text(
+                    eventToEdit == null
+                        ? 'Capture a Memory 📸'
+                        : 'Update Memory 📝',
+                    style: GoogleFonts.varelaRound(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMain,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'What happened?',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'What happened?',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: bodyController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Body',
-                    hintText: 'Tell the story...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: bodyController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Body',
+                      hintText: 'Tell the story...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    'Date: ${DateFormat('MMM dd, yyyy').format(selectedDate)}',
-                  ),
-                  trailing: const Icon(Icons.calendar_today_rounded),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setModalState(() => selectedDate = picked);
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    if (titleController.text.isNotEmpty) {
-                      if (eventToEdit == null) {
-                        final newEvent = TimelineEvent(
-                          id: const Uuid().v4(),
-                          date: selectedDate,
-                          title: titleController.text,
-                          body: bodyController.text,
-                        );
-                        _timelineBox.add(newEvent.toMap());
-                      } else {
-                        final updatedEvent = TimelineEvent(
-                          id: eventToEdit.id,
-                          date: selectedDate,
-                          title: titleController.text,
-                          body: bodyController.text,
-                        );
-                        final keyToUpdate = _timelineBox.keys.firstWhere(
-                          (k) =>
-                              TimelineEvent.fromMap(
-                                Map<dynamic, dynamic>.from(_timelineBox.get(k)),
-                              ).id ==
-                              eventToEdit.id,
-                        );
-                        _timelineBox.put(keyToUpdate, updatedEvent.toMap());
+                  const SizedBox(height: 16),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      'Date: ${DateFormat('MMM dd, yyyy').format(selectedDate)}',
+                    ),
+                    trailing: const Icon(Icons.calendar_today_rounded),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setModalState(() => selectedDate = picked);
                       }
-                      Navigator.pop(context);
-                      setState(() {});
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (titleController.text.isNotEmpty) {
+                        if (eventToEdit == null) {
+                          final newEvent = TimelineEvent(
+                            id: const Uuid().v4(),
+                            date: selectedDate,
+                            title: titleController.text,
+                            body: bodyController.text,
+                          );
+                          _timelineBox.add(newEvent.toMap());
+                        } else {
+                          final updatedEvent = TimelineEvent(
+                            id: eventToEdit.id,
+                            date: selectedDate,
+                            title: titleController.text,
+                            body: bodyController.text,
+                          );
+                          final keyToUpdate = _timelineBox.keys.firstWhere(
+                            (k) =>
+                                TimelineEvent.fromMap(
+                                  Map<dynamic, dynamic>.from(
+                                    _timelineBox.get(k),
+                                  ),
+                                ).id ==
+                                eventToEdit.id,
+                          );
+                          _timelineBox.put(keyToUpdate, updatedEvent.toMap());
+                        }
+                        Navigator.pop(context);
+                        setState(() {});
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: Text(
+                      eventToEdit == null ? 'Save Memory' : 'Update Memory',
                     ),
                   ),
-                  child: Text(
-                    eventToEdit == null ? 'Save Memory' : 'Update Memory',
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -303,11 +307,12 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_userBox.isEmpty) {
+    final profiles = ref.watch(profileProvider);
+    if (profiles.isEmpty) {
       return const Scaffold(body: Center(child: Text('No profiles found')));
     }
-    final me = _userBox.getAt(0)!;
-    final partner = _userBox.getAt(1)!;
+    final me = profiles[0];
+    final partner = profiles[1];
 
     return Column(
       children: [

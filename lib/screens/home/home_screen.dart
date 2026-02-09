@@ -15,18 +15,18 @@ import 'package:uuid/uuid.dart';
 import '../../data/models/reminder.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/liquid_background.dart';
-import 'package:home_widget/home_widget.dart';
+import '../../providers/profile_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Read from Hive
-    final userBox = Hive.box<UserProfile>(AppConstants.userBox);
+    // Watch for profile changes
+    final profiles = ref.watch(profileProvider);
     final timelineBox = Hive.box(AppConstants.timelineBox);
 
-    if (userBox.isEmpty) {
+    if (profiles.length < 2) {
       return Scaffold(
         body: Center(
           child: ElevatedButton(
@@ -37,26 +37,10 @@ class HomeScreen extends ConsumerWidget {
       );
     }
 
-    final myProfile = userBox.getAt(0);
-    final partnerProfile = userBox.getAt(1);
-
-    if (myProfile == null || partnerProfile == null) {
-      return const Scaffold(
-        body: Center(child: Text('Error loading profiles')),
-      );
-    }
+    final myProfile = profiles[0];
+    final partnerProfile = profiles[1];
 
     final startDate = myProfile.relationshipStartDate ?? DateTime.now();
-    final days = DateTime.now().difference(startDate).inDays + 1;
-    final name1 = myProfile.nickname.isNotEmpty
-        ? myProfile.nickname
-        : myProfile.name;
-    final name2 = partnerProfile.nickname.isNotEmpty
-        ? partnerProfile.nickname
-        : partnerProfile.name;
-
-    // Update Home Screen Widget
-    _updateWidget(days.toString(), name1, name2);
 
     final upcomingEvents = _getUpcomingEvents(
       myProfile,
@@ -194,13 +178,6 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  void _updateWidget(String days, String name1, String name2) {
-    HomeWidget.saveWidgetData<String>('name1', name1);
-    HomeWidget.saveWidgetData<String>('name2', name2);
-    HomeWidget.saveWidgetData<String>('days', days);
-    HomeWidget.updateWidget(name: 'CoupleWidget', androidName: 'CoupleWidget');
   }
 
   List<_UpcomingEventModel> _getUpcomingEvents(

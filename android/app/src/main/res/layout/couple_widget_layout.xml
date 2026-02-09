@@ -31,7 +31,7 @@
                 android:layout_gravity="center"
                 android:background="@drawable/avatar_bg_1"
                 android:gravity="center"
-                android:text="A"
+                android:text="?"
                 android:textColor="#FF6B6B"
                 android:textSize="28sp"
                 android:textStyle="bold" />
@@ -74,7 +74,7 @@
                 android:layout_gravity="center"
                 android:background="@drawable/avatar_bg_2"
                 android:gravity="center"
-                android:text="B"
+                android:text="?"
                 android:textColor="#4ECDC4"
                 android:textSize="28sp"
                 android:textStyle="bold" />
@@ -87,7 +87,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="A &amp; B"
+        android:text="Setup App"
         android:textColor="#1A1A1A"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -107,7 +107,7 @@
             android:id="@+id/widget_days"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0"
+            android:text="—"
             android:textColor="#FF6B6B"
             android:textSize="56sp"
             android:textStyle="bold" />

@@ -1,10 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants.dart';
-import '../../data/models/user_profile.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../providers/profile_provider.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -25,6 +25,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   DateTime? _partnerBirthday;
 
   DateTime? _relationshipStart;
+  String? _myAvatarPath;
+  String? _partnerAvatarPath;
+
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -33,47 +37,60 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   void _loadData() {
-    final box = Hive.box<UserProfile>(AppConstants.userBox);
-    if (box.isEmpty) return;
+    final profiles = ref.read(profileProvider);
+    if (profiles.isEmpty) return;
 
-    final me = box.getAt(0);
-    final partner = box.getAt(1);
+    final me = profiles[0];
+    final partner = profiles[1];
 
-    if (me != null) {
-      _myNameController.text = me.name;
-      _myNicknameController.text = me.nickname;
-      _myBirthday = me.birthday;
-      _relationshipStart = me.relationshipStartDate;
-    }
+    _myNameController.text = me.name;
+    _myNicknameController.text = me.nickname;
+    _myBirthday = me.birthday;
+    _relationshipStart = me.relationshipStartDate;
+    _myAvatarPath = me.avatarPath;
 
-    if (partner != null) {
-      _partnerNameController.text = partner.name;
-      _partnerNicknameController.text = partner.nickname;
-      _partnerBirthday = partner.birthday;
+    _partnerNameController.text = partner.name;
+    _partnerNicknameController.text = partner.nickname;
+    _partnerBirthday = partner.birthday;
+    _partnerAvatarPath = partner.avatarPath;
+  }
+
+  Future<void> _pickImage(bool isPartner) async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        if (isPartner) {
+          _partnerAvatarPath = image.path;
+        } else {
+          _myAvatarPath = image.path;
+        }
+      });
     }
   }
 
   Future<void> _saveData() async {
-    final box = Hive.box<UserProfile>(AppConstants.userBox);
+    final profiles = ref.read(profileProvider);
+    if (profiles.length < 2) return;
 
-    // Get existing objects to preserve gender/ID
-    final me = box.getAt(0);
-    final partner = box.getAt(1);
+    final me = profiles[0];
+    final partner = profiles[1];
 
-    if (me != null) {
-      me.name = _myNameController.text.trim();
-      me.nickname = _myNicknameController.text.trim();
-      me.birthday = _myBirthday ?? DateTime.now();
-      me.relationshipStartDate = _relationshipStart;
-      await box.putAt(0, me);
-    }
+    // Update objects
+    me.name = _myNameController.text.trim();
+    me.nickname = _myNicknameController.text.trim();
+    me.birthday = _myBirthday ?? me.birthday;
+    me.relationshipStartDate = _relationshipStart;
+    me.avatarPath = _myAvatarPath;
 
-    if (partner != null) {
-      partner.name = _partnerNameController.text.trim();
-      partner.nickname = _partnerNicknameController.text.trim();
-      partner.birthday = _partnerBirthday ?? DateTime.now();
-      await box.putAt(1, partner);
-    }
+    partner.name = _partnerNameController.text.trim();
+    partner.nickname = _partnerNicknameController.text.trim();
+    partner.birthday = _partnerBirthday ?? partner.birthday;
+    partner.avatarPath = _partnerAvatarPath;
+
+    // Use provider to save everywhere
+    await ref
+        .read(profileProvider.notifier)
+        .updateProfiles(me: me, partner: partner);
 
     if (mounted) {
       ScaffoldMessenger.of(
@@ -117,6 +134,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         child: Column(
           children: [
             _SectionHeader(title: "My Profile"),
+            _buildAvatarPicker(false),
+            const SizedBox(height: 16),
             _EditField(
               controller: _myNameController,
               label: "Name",
@@ -136,6 +155,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
             const SizedBox(height: 32),
             _SectionHeader(title: "Partner's Profile"),
+            _buildAvatarPicker(true),
+            const SizedBox(height: 16),
             _EditField(
               controller: _partnerNameController,
               label: "Name",
@@ -167,7 +188,69 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _saveData,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
                 child: const Text('Save Changes'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarPicker(bool isPartner) {
+    final avatarPath = isPartner ? _partnerAvatarPath : _myAvatarPath;
+    final color = Theme.of(context).primaryColor;
+
+    return Center(
+      child: GestureDetector(
+        onTap: () => _pickImage(isPartner),
+        child: Stack(
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withOpacity(0.1),
+                border: Border.all(color: color.withOpacity(0.3), width: 2),
+                image: avatarPath != null
+                    ? DecorationImage(
+                        image: avatarPath.startsWith('http')
+                            ? NetworkImage(avatarPath)
+                            : FileImage(File(avatarPath)) as ImageProvider,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: avatarPath == null
+                  ? Icon(
+                      isPartner ? Icons.face_3_rounded : Icons.face_rounded,
+                      size: 40,
+                      color: color,
+                    )
+                  : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],

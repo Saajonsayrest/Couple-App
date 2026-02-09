@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="4dp"
+    android:background="@drawable/widget_background">
+
+    <!-- Avatar 1 -->
+    <FrameLayout
+        android:id="@+id/avatar_container_1"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginStart="10dp"
+        android:background="@drawable/avatar_white_circle">
+
+        <TextView
+            android:id="@+id/widget_initial1"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_gravity="center"
+            android:background="@drawable/avatar_bg_1"
+            android:gravity="center"
+            android:text="?"
+            android:textColor="#FF6B6B"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
+    </FrameLayout>
+
+    <!-- Avatar 2 -->
+    <FrameLayout
+        android:id="@+id/avatar_container_2"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/avatar_white_circle">
+
+        <TextView
+            android:id="@+id/widget_initial2"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_gravity="center"
+            android:background="@drawable/avatar_bg_2"
+            android:gravity="center"
+            android:text="?"
+            android:textColor="#4ECDC4"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
+    </FrameLayout>
+
+    <!-- Center Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_toRightOf="@id/avatar_container_1"
+        android:layout_toLeftOf="@id/avatar_container_2"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/widget_days"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="—"
+            android:textColor="#FF6B6B"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/widget_names"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Setup App"
+            android:textColor="#1A1A1A"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
+    </LinearLayout>
+
+</RelativeLayout>

@@ -5,8 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/app_theme.dart';
 import '../../core/constants.dart';
-import '../../data/models/user_profile.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/profile_provider.dart';
+import '../../services/notification_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -110,7 +111,7 @@ class SettingsScreen extends ConsumerWidget {
                     title: 'Reset Data',
                     subtitle: 'Clear all profiles and memories',
                     isDestructive: true,
-                    onTap: () => _showResetDialog(context),
+                    onTap: () => _showResetDialog(context, ref),
                   ),
                 ],
               ),
@@ -211,7 +212,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showResetDialog(BuildContext context) {
+  void _showResetDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -226,9 +227,16 @@ class SettingsScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () async {
-              // Clear Data
-              await Hive.box<UserProfile>(AppConstants.userBox).clear();
+              // Use provider to reset (clears Hive + State + Widget)
+              await ref.read(profileProvider.notifier).reset();
+
+              // Clear other boxes
               await Hive.box(AppConstants.settingsBox).clear();
+              await Hive.box(AppConstants.timelineBox).clear();
+              await Hive.box(AppConstants.remindersBox).clear();
+
+              // Clear notifications
+              await NotificationService().cancelAllNotifications();
 
               if (context.mounted) {
                 Navigator.pop(context); // Close dialog

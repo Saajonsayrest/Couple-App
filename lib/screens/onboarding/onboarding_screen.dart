@@ -237,7 +237,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       avatarPath: _myAvatarPath,
       onBirthdayTap: () => _selectDate(context, isMyBirthday: true),
       onAvatarTap: () => _pickImage(true),
-      onAnimeify: (newPath) => setState(() => _myAvatarPath = newPath),
       onNext: _nextPage,
       color: Theme.of(context).primaryColor,
       isMaleTheme: isMale,
@@ -259,7 +258,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       avatarPath: _partnerAvatarPath,
       onBirthdayTap: () => _selectDate(context, isMyBirthday: false),
       onAvatarTap: () => _pickImage(false),
-      onAnimeify: (newPath) => setState(() => _partnerAvatarPath = newPath),
       onNext: _nextPage,
       color: partnerColor,
       isMaleTheme: !isUserMale,
@@ -342,7 +340,6 @@ class _ProfileForm extends StatefulWidget {
   final String? avatarPath;
   final VoidCallback onBirthdayTap;
   final VoidCallback onAvatarTap;
-  final Function(String) onAnimeify;
   final VoidCallback onNext;
   final Color color;
   final bool isMaleTheme;
@@ -355,7 +352,6 @@ class _ProfileForm extends StatefulWidget {
     required this.avatarPath,
     required this.onBirthdayTap,
     required this.onAvatarTap,
-    required this.onAnimeify,
     required this.onNext,
     required this.color,
     required this.isMaleTheme,
@@ -366,34 +362,6 @@ class _ProfileForm extends StatefulWidget {
 }
 
 class _ProfileFormState extends State<_ProfileForm> {
-  bool _isProcessingAnime = false;
-
-  void _runAnimeify() async {
-    setState(() => _isProcessingAnime = true);
-
-    // Simulate AI Processing
-    await Future.delayed(const Duration(seconds: 2));
-
-    // In a real app, this would be an API call transforming the image.
-    // For now, we simulate by providing a Disney Pixar style character path.
-    // We'll use a network URL for the demonstration of the concept.
-    final animePath = widget.isMaleTheme
-        ? "https://avatar.iran.liara.run/public/boy" // Example public avatar API
-        : "https://avatar.iran.liara.run/public/girl";
-
-    setState(() => _isProcessingAnime = false);
-    widget.onAnimeify(animePath);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Transformed to Disney Pixar style! ✨"),
-          backgroundColor: widget.color,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final df = DateFormat.yMMMMd();
@@ -420,66 +388,37 @@ class _ProfileFormState extends State<_ProfileForm> {
 
           // Avatar Picker
           Center(
-            child: Stack(
-              children: [
-                GestureDetector(
-                  onTap: widget.onAvatarTap,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: widget.color.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: widget.color.withOpacity(0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: _isProcessingAnime
-                        ? const CircularProgressIndicator()
-                        : widget.avatarPath == null
-                        ? Icon(
-                            Icons.add_a_photo_rounded,
-                            color: widget.color,
-                            size: 40,
-                          )
-                        : ClipOval(
-                            child: widget.avatarPath!.startsWith('http')
-                                ? Image.network(
-                                    widget.avatarPath!,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.file(
-                                    File(widget.avatarPath!),
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
+            child: GestureDetector(
+              onTap: widget.onAvatarTap,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: widget.color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: widget.color.withOpacity(0.3),
+                    width: 2,
                   ),
                 ),
-                if (widget.avatarPath != null && !_isProcessingAnime)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: _runAnimeify,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(color: Colors.black12, blurRadius: 10),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.auto_fix_high_rounded,
-                          color: Colors.orangeAccent,
-                          size: 24,
-                        ),
+                child: widget.avatarPath == null
+                    ? Icon(
+                        Icons.add_a_photo_rounded,
+                        color: widget.color,
+                        size: 40,
+                      )
+                    : ClipOval(
+                        child: widget.avatarPath!.startsWith('http')
+                            ? Image.network(
+                                widget.avatarPath!,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                File(widget.avatarPath!),
+                                fit: BoxFit.cover,
+                              ),
                       ),
-                    ).animate().scale(curve: Curves.elasticOut),
-                  ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -488,14 +427,6 @@ class _ProfileFormState extends State<_ProfileForm> {
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSub, fontSize: 12),
           ),
-          if (widget.avatarPath != null &&
-              !widget.avatarPath!.startsWith('http'))
-            TextButton.icon(
-              onPressed: _runAnimeify,
-              icon: const Icon(Icons.star_rounded, size: 16),
-              label: const Text("Anime Pixar Look ✨"),
-              style: TextButton.styleFrom(foregroundColor: Colors.orangeAccent),
-            ),
 
           const SizedBox(height: 32),
           _CustomTextField(

@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import '../data/models/reminder.dart';
 
 class NotificationService {
@@ -14,10 +15,24 @@ class NotificationService {
   Future<void> init() async {
     tz.initializeTimeZones();
 
-    // Guess timezone based on offset since the plugin is failing to build
     try {
-      final String guessedZone = _guessTimezone();
-      tz.setLocalLocation(tz.getLocation(guessedZone));
+      final dynamic tzInfo = await FlutterTimezone.getLocalTimezone();
+      String timeZoneName;
+      if (tzInfo is String) {
+        timeZoneName = tzInfo;
+      } else {
+        // Fallback for TimezoneInfo object (version 5.0.1+)
+        try {
+          timeZoneName = tzInfo.name ?? 'UTC';
+        } catch (_) {
+          try {
+            timeZoneName = (tzInfo as dynamic).identifier ?? 'UTC';
+          } catch (_) {
+            timeZoneName = 'UTC';
+          }
+        }
+      }
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (e) {
       tz.setLocalLocation(tz.getLocation('UTC'));
     }
@@ -55,21 +70,34 @@ class NotificationService {
       return;
     }
 
-    final id = reminder.id.hashCode;
+    // Use a positive 31-bit integer for the notification id
+    final id = reminder.id.hashCode & 0x7FFFFFFF;
 
     await _notificationsPlugin.zonedSchedule(
       id,
-      'Friendly Reminder 🔔',
+      'Sweet Reminder ❤️',
       reminder.title,
       tz.TZDateTime.from(reminder.dateTime, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'reminders_channel',
           'Reminders',
+          channelDescription: 'Channel for scheduled reminders',
           importance: Importance.max,
-          priority: Priority.high,
+          priority: Priority.max,
+          category: AndroidNotificationCategory.alarm,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+          fullScreenIntent: true,
+          styleInformation: BigTextStyleInformation(''),
+          playSound: true,
+          enableVibration: true,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
@@ -78,27 +106,10 @@ class NotificationService {
   }
 
   Future<void> cancelReminder(String reminderId) async {
-    await _notificationsPlugin.cancel(reminderId.hashCode);
+    await _notificationsPlugin.cancel(reminderId.hashCode & 0x7FFFFFFF);
   }
 
-  String _guessTimezone() {
-    final DateTime now = DateTime.now();
-    final int offsetMinutes = now.timeZoneOffset.inMinutes;
-    final int hours = offsetMinutes ~/ 60;
-    final int minutes = (offsetMinutes % 60).abs();
-
-    // Check specific common offsets
-    if (hours == 5 && minutes == 45) return 'Asia/Kathmandu';
-    if (hours == 5 && minutes == 30) return 'Asia/Kolkata';
-    if (hours == 0 && minutes == 0) return 'UTC';
-
-    // Generic fallback based on offset sign
-    final String sign = offsetMinutes >= 0 ? '+' : '-';
-    final String formattedOffset =
-        '${sign}${hours.abs().toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
-
-    // The timezone package doesn't support generic offsets like Etv/GMT+5 easily
-    // So we try to find a city that matches this offset if possible, otherwise UTC
-    return 'UTC';
+  Future<void> cancelAllNotifications() async {
+    await _notificationsPlugin.cancelAll();
   }
 }
