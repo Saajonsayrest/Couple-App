@@ -72,5 +72,6 @@ adbwire
 
 flutter clean
 flutter pub get
+flutter run
 flutter build apk --release
 flutter build appbundle --release

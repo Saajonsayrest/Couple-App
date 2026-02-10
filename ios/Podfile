@@ -1,5 +1,4 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -36,9 +35,7 @@ target 'Runner' do
   end
 end
 
-target 'CoupleWidget' do
-  use_frameworks!
-end
+
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|

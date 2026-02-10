@@ -8,7 +8,6 @@ import '../../core/constants.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../services/notification_service.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -115,24 +114,7 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () => _showResetDialog(context, ref),
                   ),
                   const SizedBox(height: 48),
-                  Center(
-                    child: FutureBuilder<PackageInfo>(
-                      future: PackageInfo.fromPlatform(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Text(
-                            'Version ${snapshot.data!.version}',
-                            style: GoogleFonts.varelaRound(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSub.withOpacity(0.5),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  ),
+
                   const SizedBox(height: 24),
                 ],
               ),

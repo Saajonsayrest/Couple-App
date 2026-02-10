@@ -47,3 +47,8 @@ app.*.map.json
 # Credentials
 android/key.properties
 android/app/upload-keystore.jks
+
+# Android Gradle
+android/gradle/wrapper/dists/
+android/gradle-user-home/
+
