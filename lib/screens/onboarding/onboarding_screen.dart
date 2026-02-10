@@ -4,14 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../../providers/theme_provider.dart';
+import '../../providers/profile_provider.dart';
 import '../../core/app_theme.dart';
-import '../../core/constants.dart';
 import '../../data/models/user_profile.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -81,7 +80,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _completeOnboarding() async {
-    final box = Hive.box<UserProfile>(AppConstants.userBox);
     final themeId = ref.read(themeProvider);
     final isMale = themeId == 'sky_dreams';
 
@@ -104,8 +102,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       isPartner: true,
     );
 
-    await box.add(myProfile);
-    await box.add(partnerProfile);
+    await ref
+        .read(profileProvider.notifier)
+        .updateProfiles(me: myProfile, partner: partnerProfile);
 
     if (mounted) context.go('/');
   }

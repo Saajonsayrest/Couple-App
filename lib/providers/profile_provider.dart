@@ -19,7 +19,11 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     if (Hive.isBoxOpen(AppConstants.userBox)) {
       final box = Hive.box<UserProfile>(AppConstants.userBox);
       if (box.isNotEmpty) {
-        state = box.values.toList();
+        final profiles = box.values.toList();
+        state = profiles;
+        if (profiles.length >= 2) {
+          _updateHomeWidget(profiles[0], profiles[1]);
+        }
       }
     }
   }
@@ -31,8 +35,8 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     final box = Hive.box<UserProfile>(AppConstants.userBox);
 
     // Save to Hive
-    await box.putAt(0, me);
-    await box.putAt(1, partner);
+    await box.put(0, me);
+    await box.put(1, partner);
 
     // Update local state to trigger UI changes
     state = [me, partner];
