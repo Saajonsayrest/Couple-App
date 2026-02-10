@@ -16,6 +16,7 @@ import '../../data/models/reminder.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/liquid_background.dart';
 import '../../providers/profile_provider.dart';
+import '../../core/globals.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -513,6 +514,14 @@ class HomeScreen extends ConsumerWidget {
               );
               await box.delete(key);
               await NotificationService().cancelReminder(reminder.id);
+
+              scaffoldMessengerKey.currentState?.clearSnackBars();
+              scaffoldMessengerKey.currentState?.showSnackBar(
+                const SnackBar(
+                  content: Text('Reminder Completed! ✨'),
+                  duration: Duration(milliseconds: 1500),
+                ),
+              );
             },
             child: Container(
               margin: const EdgeInsets.only(right: 16, left: 4),
@@ -659,7 +668,14 @@ class HomeScreen extends ConsumerWidget {
 
                       await NotificationService().scheduleReminder(reminder);
 
-                      Navigator.pop(context);
+                      scaffoldMessengerKey.currentState?.showSnackBar(
+                        const SnackBar(
+                          content: Text('Reminder Scheduled! 🔔'),
+                          duration: Duration(milliseconds: 1500),
+                        ),
+                      );
+
+                      if (context.mounted) Navigator.pop(context);
                     }
                   },
                   style: ElevatedButton.styleFrom(

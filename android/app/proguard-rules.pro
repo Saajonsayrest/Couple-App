@@ -18,3 +18,20 @@
 -dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
 -dontwarn com.google.android.play.core.splitinstall.**
 -dontwarn com.google.android.play.core.tasks.**
+
+# Flutter Local Notifications
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+
+# Hive
+-keep class io.hive.** { *; }
+-keep class * extends io.hive.TypeAdapter { *; }
+
+# Keep data models and Hive generated adapters
+-keep class com.example.couple_app.data.models.** { *; }
+-keep @com.hive.HiveType class * { *; }
+-keep class * extends com.hive.HiveObject { *; }
+-keep class * implements com.hive.TypeAdapter { *; }
+
+# Keep timezone data
+-keep class com.flutter_timezone.** { *; }
+-keep class com.timezone.** { *; }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/profile_provider.dart';
+import '../../core/globals.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -93,7 +94,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         .updateProfiles(me: me, partner: partner);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
           content: Text('Details Updated!'),
           duration: Duration(milliseconds: 1500),

@@ -45,37 +45,43 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     _updateHomeWidget(me, partner);
 
     // Schedule Special Events
-    final notifService = NotificationService();
+    try {
+      final notifService = NotificationService();
 
-    // Anniversary
-    if (me.relationshipStartDate != null) {
+      // Anniversary
+      if (me.relationshipStartDate != null) {
+        await notifService.scheduleAnnualEvent(
+          id: 1001,
+          title: 'Happy Anniversary! ❤️',
+          body: 'Another year of love and happiness together! 🥂',
+          date: me.relationshipStartDate!,
+        );
+      }
+
+      final partnerName = partner.nickname.isNotEmpty
+          ? partner.nickname
+          : partner.name;
+
+      // Partner Birthday
       await notifService.scheduleAnnualEvent(
-        id: 1001,
-        title: 'Happy Anniversary! ❤️',
-        body: 'Another year of love and happiness together! 🥂',
-        date: me.relationshipStartDate!,
+        id: 1002,
+        title: 'Happy Birthday $partnerName! 🎂',
+        body: "Today is $partnerName's special day! Make it amazing! 🎉",
+        date: partner.birthday,
       );
+
+      // My Birthday
+      await notifService.scheduleAnnualEvent(
+        id: 1003,
+        title: 'Happy Birthday to You! 🎂',
+        body: "It's your special day! Hope $partnerName spoils you! 🎁",
+        date: me.birthday,
+      );
+    } catch (e) {
+      // In release mode, notification scheduling might fail due to system settings
+      // We don't want to block the onboarding/update process because of this
+      print('Failed to schedule annual notifications: $e');
     }
-
-    final partnerName = partner.nickname.isNotEmpty
-        ? partner.nickname
-        : partner.name;
-
-    // Partner Birthday
-    await notifService.scheduleAnnualEvent(
-      id: 1002,
-      title: 'Happy Birthday $partnerName! 🎂',
-      body: 'Today is $partnerName\'s special day! Make it amazing! 🎉',
-      date: partner.birthday,
-    );
-
-    // My Birthday (optional, but requested "each other")
-    await notifService.scheduleAnnualEvent(
-      id: 1003,
-      title: 'Happy Birthday to You! 🎂',
-      body: 'It\'s your special day! Hope $partnerName spoils you! 🎁',
-      date: me.birthday,
-    );
   }
 
   void _updateHomeWidget(UserProfile me, UserProfile partner) {

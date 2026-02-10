@@ -12,6 +12,7 @@ import '../../providers/theme_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../core/app_theme.dart';
 import '../../data/models/user_profile.dart';
+import '../../core/globals.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -106,7 +107,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         .read(profileProvider.notifier)
         .updateProfiles(me: myProfile, partner: partnerProfile);
 
-    if (mounted) context.go('/');
+    if (mounted) {
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text("Welcome! Let's start your journey ❤️"),
+          duration: Duration(milliseconds: 2000),
+        ),
+      );
+      context.go('/');
+    }
   }
 
   Future<void> _selectDate(
@@ -467,7 +476,7 @@ class _ProfileFormState extends State<_ProfileForm> {
             onPressed: isComplete
                 ? widget.onNext
                 : () {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessengerKey.currentState?.showSnackBar(
                       const SnackBar(
                         content: Text("Please fill all required fields (*)"),
                         duration: Duration(milliseconds: 1500),

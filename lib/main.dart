@@ -9,6 +9,7 @@ import 'providers/theme_provider.dart';
 import 'routes/app_router.dart';
 import 'services/notification_service.dart';
 import 'services/app_update_service.dart';
+import 'core/globals.dart';
 
 import 'data/models/user_profile.dart';
 
@@ -57,6 +58,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     // router is imported globally from routes/app_router.dart
 
     return MaterialApp.router(
+      scaffoldMessengerKey: scaffoldMessengerKey,
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getTheme(themeType),
