@@ -2,5 +2,7 @@
 <resources>
     <string name="app_name">Couple App</string>
     <string name="widget_description">Couple App - Days Together</string>
+    <string name="days_widget_description">Days Together Counter</string>
     <string name="heart_icon">\u2764\uFE0F</string>
 </resources>
+

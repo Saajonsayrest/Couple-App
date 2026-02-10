@@ -111,7 +111,13 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
       'startDate',
       normalizedStart.millisecondsSinceEpoch,
     );
+    // Save avatar paths for widget images
+    HomeWidget.saveWidgetData<String>('avatar1Path', me.avatarPath ?? '');
+    HomeWidget.saveWidgetData<String>('avatar2Path', partner.avatarPath ?? '');
+
+    // Update both widgets
     HomeWidget.updateWidget(name: 'CoupleWidget', androidName: 'CoupleWidget');
+    HomeWidget.updateWidget(name: 'DaysWidget', androidName: 'DaysWidget');
   }
 
   Future<void> reset() async {
@@ -126,6 +132,10 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     HomeWidget.saveWidgetData('initial2', null);
     HomeWidget.saveWidgetData('days', null);
     HomeWidget.saveWidgetData('startDate', null);
+    HomeWidget.saveWidgetData('avatar1Path', null);
+    HomeWidget.saveWidgetData('avatar2Path', null);
+    // Update both widgets
     HomeWidget.updateWidget(name: 'CoupleWidget', androidName: 'CoupleWidget');
+    HomeWidget.updateWidget(name: 'DaysWidget', androidName: 'DaysWidget');
   }
 }

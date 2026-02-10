@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/days_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <!-- Large Day Counter -->
+    <TextView
+        android:id="@+id/days_widget_counter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="—"
+        android:textColor="#FF6B6B"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        android:gravity="center" />
+
+    <!-- Days Together Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/days_pill_bg"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:text="Days Together"
+        android:textColor="#FF6B6B"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

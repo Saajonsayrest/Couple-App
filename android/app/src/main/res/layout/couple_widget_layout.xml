@@ -24,6 +24,17 @@
             android:layout_height="75dp"
             android:background="@drawable/avatar_white_circle">
 
+            <!-- Image for avatar photo -->
+            <ImageView
+                android:id="@+id/widget_avatar1"
+                android:layout_width="67dp"
+                android:layout_height="67dp"
+                android:layout_gravity="center"
+                android:background="@drawable/avatar_circle_clip"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <!-- TextView for initial fallback -->
             <TextView
                 android:id="@+id/widget_initial1"
                 android:layout_width="67dp"
@@ -34,7 +45,8 @@
                 android:text="?"
                 android:textColor="#FF6B6B"
                 android:textSize="28sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:visibility="visible" />
         </FrameLayout>
 
         <!-- Heart Icon with line -->
@@ -67,6 +79,17 @@
             android:layout_height="75dp"
             android:background="@drawable/avatar_white_circle">
 
+            <!-- Image for avatar photo -->
+            <ImageView
+                android:id="@+id/widget_avatar2"
+                android:layout_width="67dp"
+                android:layout_height="67dp"
+                android:layout_gravity="center"
+                android:background="@drawable/avatar_circle_clip"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <!-- TextView for initial fallback -->
             <TextView
                 android:id="@+id/widget_initial2"
                 android:layout_width="67dp"
@@ -77,7 +100,8 @@
                 android:text="?"
                 android:textColor="#4ECDC4"
                 android:textSize="28sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:visibility="visible" />
         </FrameLayout>
     </LinearLayout>
 
