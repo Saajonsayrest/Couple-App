@@ -1,4 +1,4 @@
-package com.example.couple_app
+package com.sajon.couple_app
 
 import android.annotation.TargetApi
 import android.app.PendingIntent

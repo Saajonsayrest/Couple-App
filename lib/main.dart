@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:upgrader/upgrader.dart';
 import 'core/app_theme.dart';
 import 'core/constants.dart';
@@ -15,6 +16,9 @@ import 'data/models/user_profile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Set App Group ID for iOS HomeWidget support
+  await HomeWidget.setAppGroupId('group.com.sajon.coupleApp');
 
   // Initialize Hive
   await Hive.initFlutter();

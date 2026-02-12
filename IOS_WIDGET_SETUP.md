@@ -25,7 +25,7 @@ open Runner.xcworkspace
 2. Select **Widget Extension**
 3. Set the following:
    - **Product Name**: `CoupleWidget`
-   - **Bundle Identifier**: `com.example.coupleApp.CoupleWidget`
+   - **Bundle Identifier**: `com.sajon.coupleApp.CoupleWidget`
    - **Include Configuration Intent**: ❌ Uncheck this
 4. Click **Finish**
 5. When prompted "Activate 'CoupleWidget' scheme?", click **Activate**
@@ -49,14 +49,14 @@ App Groups allow data sharing between the main app and widget.
 2. Go to **Signing & Capabilities** tab
 3. Click **+ Capability**
 4. Add **App Groups**
-5. Click **+** and add: `group.com.example.coupleApp`
+5. Click **+** and add: `group.com.sajon.coupleApp`
 
 #### For Widget Extension:
 1. Select **CoupleWidget** target in Xcode
 2. Go to **Signing & Capabilities** tab
 3. Click **+ Capability**
 4. Add **App Groups**
-5. Click **+** and add: `group.com.example.coupleApp` (same as above)
+5. Click **+** and add: `group.com.sajon.coupleApp` (same as above)
 
 ### Step 5: Update Flutter Code to Support iOS
 Update your Flutter code where you save widget data to also use the iOS group:
@@ -124,7 +124,7 @@ Future<void> updateWidget() async {
 
 ### Widget Not Showing Data
 - Make sure App Groups are configured correctly in both targets
-- Verify the group name is exactly: `group.com.example.coupleApp`
+- Verify the group name is exactly: `group.com.sajon.coupleApp`
 - Check that your Flutter code is calling `HomeWidget.updateWidget()`
 
 ### Build Errors

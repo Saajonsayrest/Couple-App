@@ -8,7 +8,7 @@
 PRODUCT_NAME = couple_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.coupleApp
+PRODUCT_BUNDLE_IDENTIFIER = com.sajon.coupleApp
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.sajon. All rights reserved.

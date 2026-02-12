@@ -1,3 +1,13 @@
+//
+//  CoupleWidget.swift
+//  CoupleWidget
+//
+//  Created by Sajon Shrestha on 12/02/2026.
+//
+
+import WidgetKit
+import SwiftUI
+
 import WidgetKit
 import SwiftUI
 
@@ -26,7 +36,7 @@ struct Provider: TimelineProvider {
     }
     
     private func createEntry() -> CoupleEntry {
-        let sharedDefaults = UserDefaults(suiteName: "group.com.example.coupleApp")
+        let sharedDefaults = UserDefaults(suiteName: "group.com.sajon.coupleApp")
         
         let name1 = sharedDefaults?.string(forKey: "name1") ?? "Setup"
         let name2 = sharedDefaults?.string(forKey: "name2") ?? "App"
@@ -248,7 +258,7 @@ func loadImage(from path: String) -> UIImage? {
     }
     
     // Try app group container path
-    if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.example.coupleApp") {
+    if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.sajon.coupleApp") {
         let fullPath = containerURL.appendingPathComponent(path).path
         if fileManager.fileExists(atPath: fullPath) {
             return UIImage(contentsOfFile: fullPath)
