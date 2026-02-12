@@ -114,31 +114,38 @@ struct CoupleWidgetEntryView : View {
                 .padding()
             } else {
                 // Full Couple Card Layout for Medium Widget
-                VStack(spacing: 12) {
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 20)
+                    
                     // Avatars Row with Heart
-                    HStack(spacing: 10) {
+                    HStack(spacing: 0) {
+                        Spacer()
+                        
                         // Avatar 1 with white border
                         ZStack {
+                            // White border circle
                             Circle()
                                 .fill(Color.white)
-                                .frame(width: 75, height: 75)
+                                .frame(width: 68, height: 68)
                             
                             if let avatar1Path = entry.avatar1Path, !avatar1Path.isEmpty,
                                let uiImage = loadImage(from: avatar1Path) {
+                                // User's image
                                 Image(uiImage: uiImage)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 67, height: 67)
+                                    .frame(width: 62, height: 62)
                                     .clipShape(Circle())
                             } else {
+                                // Fallback: Initial with gradient background
                                 ZStack {
                                     Circle()
-                                        .fill(Color(hex: "0DFF6B6B")) // Semi-transparent pink matching Android
+                                        .fill(Color(hex: "0DFF6B6B"))
                                         .overlay(
                                             Circle()
                                                 .stroke(Color(hex: "20FF6B6B"), lineWidth: 1)
                                         )
-                                        .frame(width: 67, height: 67)
+                                        .frame(width: 62, height: 62)
                                     
                                     Text(entry.initial1)
                                         .font(.system(size: 28, weight: .bold))
@@ -147,39 +154,43 @@ struct CoupleWidgetEntryView : View {
                             }
                         }
                         
-                        // Heart Icon with line
+                        // Heart Icon with decorative line
                         VStack(spacing: 2) {
                             Text("❤️")
-                                .font(.system(size: 28))
+                                .font(.system(size: 26))
                             
                             Rectangle()
-                                .fill(Color(hex: "1AFF6B6B")) // Semi-transparent pink matching Android
+                                .fill(Color(hex: "1AFF6B6B"))
                                 .frame(width: 32, height: 3)
-                                .cornerRadius(2)
+                                .cornerRadius(1.5)
                         }
+                        .padding(.horizontal, 12)
                         
                         // Avatar 2 with white border
                         ZStack {
+                            // White border circle
                             Circle()
                                 .fill(Color.white)
-                                .frame(width: 75, height: 75)
+                                .frame(width: 68, height: 68)
                             
                             if let avatar2Path = entry.avatar2Path, !avatar2Path.isEmpty,
                                let uiImage = loadImage(from: avatar2Path) {
+                                // User's image
                                 Image(uiImage: uiImage)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 67, height: 67)
+                                    .frame(width: 62, height: 62)
                                     .clipShape(Circle())
                             } else {
+                                // Fallback: Initial with gradient background
                                 ZStack {
                                     Circle()
-                                        .fill(Color(hex: "0D4ECDC4")) // Semi-transparent teal matching Android
+                                        .fill(Color(hex: "0D4ECDC4"))
                                         .overlay(
                                             Circle()
                                                 .stroke(Color(hex: "204ECDC4"), lineWidth: 1)
                                         )
-                                        .frame(width: 67, height: 67)
+                                        .frame(width: 62, height: 62)
                                     
                                     Text(entry.initial2)
                                         .font(.system(size: 28, weight: .bold))
@@ -187,35 +198,46 @@ struct CoupleWidgetEntryView : View {
                                 }
                             }
                         }
+                        
+                        Spacer()
                     }
                     
-                    // Names
+                    Spacer().frame(height: 10)
+                    
+                    // Names - centered
                     Text("\(entry.name1) & \(entry.name2)")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(Color(hex: "1A1A1A"))
                         .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     
-                    // Counter Area
+                    Spacer()
+                    
+                    // Counter Area - centered
                     VStack(spacing: 4) {
                         // Large Day Counter
                         Text(entry.days)
                             .font(.system(size: 56, weight: .bold))
                             .foregroundColor(Color(hex: "FF6B6B"))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                         
-                        // Days Together Pill - matching Android's semi-transparent background
+                        // Days Together Pill
                         Text("Days Together")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(Color(hex: "FF6B6B"))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 5)
                             .background(
                                 Capsule()
-                                    .fill(Color(hex: "0DFF6B6B")) // Semi-transparent pink matching Android
+                                    .fill(Color(hex: "0DFF6B6B"))
                             )
                     }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    Spacer().frame(height: 22)
                 }
-                .padding(.vertical, 24)
-                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .cornerRadius(20)
