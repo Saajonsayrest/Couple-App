@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -94,7 +94,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		E1EA54FF2F3DE2FF005D4EEE /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		E1EA54FF2F3DE2FF005D4EEE /* Exceptions for "CoupleWidget" folder in "CoupleWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -104,7 +104,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		E1EA54EC2F3DE2FE005D4EEE /* CoupleWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (E1EA54FF2F3DE2FF005D4EEE /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = CoupleWidget; sourceTree = "<group>"; };
+		E1EA54EC2F3DE2FE005D4EEE /* CoupleWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E1EA54FF2F3DE2FF005D4EEE /* Exceptions for "CoupleWidget" folder in "CoupleWidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = CoupleWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -251,9 +262,9 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				E1EA54FB2F3DE2FF005D4EEE /* Embed Foundation Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				2DBEA22E84D7E455913803E7 /* [CP] Embed Pods Frameworks */,
-				E1EA54FB2F3DE2FF005D4EEE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -281,8 +292,6 @@
 				E1EA54EC2F3DE2FE005D4EEE /* CoupleWidget */,
 			);
 			name = CoupleWidgetExtension;
-			packageProductDependencies = (
-			);
 			productName = CoupleWidgetExtension;
 			productReference = E1EA54E72F3DE2FE005D4EEE /* CoupleWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -368,13 +377,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -410,6 +415,7 @@
 			files = (
 			);
 			inputPaths = (
+				"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}",
 			);
 			name = "Thin Binary";
 			outputPaths = (
