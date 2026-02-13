@@ -218,10 +218,11 @@ class SettingsScreen extends ConsumerWidget {
   void _showResetDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Reset Everything?'),
         content: const Text(
-          'This will delete all your profiles, memories, and settings. This action cannot be undone.',
+          'This will delete all your profiles, memories, and settings. The app will restart as if it\'s the first time you\'re opening it. This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -241,9 +242,13 @@ class SettingsScreen extends ConsumerWidget {
               // Clear notifications
               await NotificationService().cancelAllNotifications();
 
+              // Reset theme to default
+              ref.read(themeProvider.notifier).setTheme('sky_dreams');
+
               if (context.mounted) {
                 Navigator.pop(context); // Close dialog
-                context.go('/onboarding'); // Go to start
+                // Use go with replace to clear navigation stack
+                context.go('/onboarding');
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),

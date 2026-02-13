@@ -38,6 +38,9 @@ struct Provider: TimelineProvider {
     private func createEntry() -> CoupleEntry {
         let sharedDefaults = UserDefaults(suiteName: "group.com.sajon.coupleApp")
         
+        // Force synchronize to ensure we have latest data
+        // sharedDefaults?.synchronize() // Removed to prevent blocking
+        
         let name1 = sharedDefaults?.string(forKey: "name1") ?? "Setup"
         let name2 = sharedDefaults?.string(forKey: "name2") ?? "App"
         let initial1 = sharedDefaults?.string(forKey: "initial1") ?? "?"
@@ -45,6 +48,11 @@ struct Provider: TimelineProvider {
         let startDateMillis = sharedDefaults?.object(forKey: "startDate") as? Int ?? 0
         let avatar1Path = sharedDefaults?.string(forKey: "avatar1Path")
         let avatar2Path = sharedDefaults?.string(forKey: "avatar2Path")
+        
+        // Debug logging
+        print("Widget - Name1: \(name1), Name2: \(name2)")
+        print("Widget - Avatar1Path: \(avatar1Path ?? "nil"), Avatar2Path: \(avatar2Path ?? "nil")")
+        print("Widget - StartDate: \(startDateMillis)")
         
         // Calculate days dynamically
         var days = "—"
@@ -88,159 +96,171 @@ struct CoupleWidgetEntryView : View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        ZStack {
-            // Background matching Android (solid white with rounded corners)
-            Color.white
-            
-            if family == .systemSmall {
-                // Simplified "Days Together" Layout for 1x1/2x2 Widget
-                VStack(spacing: 8) {
-                    Text(entry.days)
-                        .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(Color(hex: "FF6B6B"))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                    
-                    Text("Days Together")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(Color(hex: "FF6B6B"))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color(hex: "0DFF6B6B"))
-                        )
+        if #available(iOS 17.0, *) {
+            content
+                .containerBackground(for: .widget) {
+                    Color.white
                 }
-                .padding()
-            } else {
-                // Full Couple Card Layout for Medium Widget
-                VStack(spacing: 0) {
-                    Spacer().frame(height: 20)
-                    
-                    // Avatars Row with Heart
-                    HStack(spacing: 0) {
-                        Spacer()
-                        
-                        // Avatar 1 with white border
-                        ZStack {
-                            // White border circle
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 68, height: 68)
-                            
-                            if let avatar1Path = entry.avatar1Path, !avatar1Path.isEmpty,
-                               let uiImage = loadImage(from: avatar1Path) {
-                                // User's image
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 62, height: 62)
-                                    .clipShape(Circle())
-                            } else {
-                                // Fallback: Initial with gradient background
-                                ZStack {
-                                    Circle()
-                                        .fill(Color(hex: "0DFF6B6B"))
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color(hex: "20FF6B6B"), lineWidth: 1)
-                                        )
-                                        .frame(width: 62, height: 62)
-                                    
-                                    Text(entry.initial1)
-                                        .font(.system(size: 28, weight: .bold))
-                                        .foregroundColor(Color(hex: "FF6B6B"))
-                                }
-                            }
-                        }
-                        
-                        // Heart Icon with decorative line
-                        VStack(spacing: 2) {
-                            Text("❤️")
-                                .font(.system(size: 26))
-                            
-                            Rectangle()
-                                .fill(Color(hex: "1AFF6B6B"))
-                                .frame(width: 32, height: 3)
-                                .cornerRadius(1.5)
-                        }
-                        .padding(.horizontal, 12)
-                        
-                        // Avatar 2 with white border
-                        ZStack {
-                            // White border circle
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 68, height: 68)
-                            
-                            if let avatar2Path = entry.avatar2Path, !avatar2Path.isEmpty,
-                               let uiImage = loadImage(from: avatar2Path) {
-                                // User's image
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 62, height: 62)
-                                    .clipShape(Circle())
-                            } else {
-                                // Fallback: Initial with gradient background
-                                ZStack {
-                                    Circle()
-                                        .fill(Color(hex: "0D4ECDC4"))
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color(hex: "204ECDC4"), lineWidth: 1)
-                                        )
-                                        .frame(width: 62, height: 62)
-                                    
-                                    Text(entry.initial2)
-                                        .font(.system(size: 28, weight: .bold))
-                                        .foregroundColor(Color(hex: "4ECDC4"))
-                                }
-                            }
-                        }
-                        
-                        Spacer()
-                    }
-                    
-                    Spacer().frame(height: 10)
-                    
-                    // Names - centered
-                    Text("\(entry.name1) & \(entry.name2)")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(Color(hex: "1A1A1A"))
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    Spacer()
-                    
-                    // Counter Area - centered
-                    VStack(spacing: 4) {
-                        // Large Day Counter
+        } else {
+            content
+                .background(Color.white)
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        Group {
+                if family == .systemSmall {
+                    // Simplified "Days Together" Layout for 1x1/2x2 Widget
+                    VStack(spacing: 8) {
                         Text(entry.days)
-                            .font(.system(size: 56, weight: .bold))
+                            .font(.system(size: 48, weight: .bold))
                             .foregroundColor(Color(hex: "FF6B6B"))
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
                         
-                        // Days Together Pill
                         Text("Days Together")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(Color(hex: "FF6B6B"))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 5)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
                             .background(
                                 Capsule()
-                                    .fill(Color(hex: "0DFF6B6B"))
+                                    .fill(Color(hex: "33FF6B6B"))
                             )
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    Spacer().frame(height: 22)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    // Full Couple Card Layout for Medium Widget
+                    VStack(spacing: 0) {
+                        Spacer()
+                        
+                        // Avatars Row with Heart
+                        HStack(spacing: 0) {
+                            Spacer()
+                            
+                            // Avatar 1 with white border
+                            ZStack {
+                                // White border circle
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 58, height: 58)
+                                
+                                if let avatar1Path = entry.avatar1Path, !avatar1Path.isEmpty,
+                                   let uiImage = loadImage(from: avatar1Path) {
+                                    // User's image
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 52, height: 52)
+                                        .clipShape(Circle())
+                                } else {
+                                    // Fallback: Initial with gradient background
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(hex: "33FF6B6B"))
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color(hex: "60FF6B6B"), lineWidth: 1)
+                                            )
+                                            .frame(width: 52, height: 52)
+                                        
+                                        Text(entry.initial1)
+                                            .font(.system(size: 22, weight: .bold))
+                                            .foregroundColor(Color(hex: "FF6B6B"))
+                                    }
+                                }
+                            }
+                            
+                            // Heart Icon with decorative line
+                            VStack(spacing: 2) {
+                                Text("❤️")
+                                    .font(.system(size: 20))
+                                
+                                Rectangle()
+                                    .fill(Color(hex: "50FF6B6B"))
+                                    .frame(width: 24, height: 3)
+                                    .cornerRadius(1.5)
+                            }
+                            .padding(.horizontal, 12)
+                            
+                            // Avatar 2 with white border
+                            ZStack {
+                                // White border circle
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 58, height: 58)
+                                
+                                if let avatar2Path = entry.avatar2Path, !avatar2Path.isEmpty,
+                                   let uiImage = loadImage(from: avatar2Path) {
+                                    // User's image
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 52, height: 52)
+                                        .clipShape(Circle())
+                                } else {
+                                    // Fallback: Initial with gradient background
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(hex: "334ECDC4"))
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color(hex: "604ECDC4"), lineWidth: 1)
+                                            )
+                                            .frame(width: 52, height: 52)
+                                        
+                                        Text(entry.initial2)
+                                            .font(.system(size: 22, weight: .bold))
+                                            .foregroundColor(Color(hex: "4ECDC4"))
+                                    }
+                                }
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        Spacer().frame(height: 4)
+                        
+                        // Names - centered
+                        Text("\(entry.name1) & \(entry.name2)")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Color(hex: "1A1A1A"))
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        Spacer().frame(height: 4)
+                        
+                        // Counter Area - centered
+                        VStack(spacing: 4) {
+                            // Large Day Counter
+                            Text(entry.days)
+                                .font(.system(size: 44, weight: .bold))
+                                .foregroundColor(Color(hex: "FF6B6B"))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                            
+                            // Days Together Pill
+                            Text("Days Together")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(Color(hex: "FF6B6B"))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 5)
+                                .background(
+                                    Capsule()
+                                        .fill(Color(hex: "33FF6B6B"))
+                                )
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        Spacer()
+                    }
+
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .cornerRadius(20)
+        .forcedUnredacted()
     }
 }
 
@@ -254,7 +274,7 @@ struct CoupleWidget: Widget {
         }
         .configurationDisplayName("Couple Widget")
         .description("Track your days together")
-        .supportedFamilies([.systemMedium, .systemSmall])
+        .supportedFamilies([.systemMedium, .systemSmall, .systemLarge])
     }
 }
 
@@ -266,6 +286,17 @@ struct CoupleWidget_Previews: PreviewProvider {
             
             CoupleWidgetEntryView(entry: CoupleEntry(date: Date(), name1: "John", name2: "Jane", initial1: "J", initial2: "J", days: "365", avatar1Path: nil, avatar2Path: nil))
                 .previewContext(WidgetPreviewContext(family: .systemSmall))
+        }
+    }
+}
+
+// Helper modifier to force unredacted content
+extension View {
+    func forcedUnredacted() -> some View {
+        if #available(iOS 14.5, *) {
+            return self.unredacted()
+        } else {
+            return self
         }
     }
 }

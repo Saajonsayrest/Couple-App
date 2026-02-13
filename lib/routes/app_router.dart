@@ -8,6 +8,7 @@ import '../screens/play/play_screen.dart';
 import '../screens/feelings/feelings_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/edit_profile_screen.dart';
+import '../screens/debug/widget_debug_screen.dart';
 import '../screens/main_screen.dart';
 
 import '../screens/play/games/truth_or_dare_screen.dart';
@@ -97,6 +98,10 @@ final router = GoRouter(
         GoRoute(
           path: 'edit-profile',
           builder: (context, state) => const EditProfileScreen(),
+        ),
+        GoRoute(
+          path: 'widget-debug',
+          builder: (context, state) => const WidgetDebugScreen(),
         ),
       ],
     ),

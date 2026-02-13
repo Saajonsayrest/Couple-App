@@ -1,77 +1,61 @@
 #!/bin/bash
 
-# ===========================
-# Flutter Setup Script
-# Usage:
-#   ./setup.sh android   → Android only
-#   ./setup.sh ios       → iOS only
-#   ./setup.sh all       → Both (default)
-# ===========================
+# ==============================================================================
+# USAGE (Copy & Paste):
+#   ./setup.sh sim             -> Clean + Get + Pods + Run on Simulator
+#   ./setup.sh ios-release     -> Clean + Get + Pods + Run on Physical Phone
+#   ./setup.sh android-release -> Clean + Get + Run on Android Phone
+#   ./setup.sh apk             -> Clean + Get + Build APK
+#   ./setup.sh ipa             -> Clean + Get + Pods + Build IPA
+# ==============================================================================
 
-TARGET=${1:-android}  # Default to 'android' if no argument provided
-
-# --- Android Setup ---
-function android_setup() {
-    echo "🧹 Cleaning Android project..."
-    flutter clean
-
-    echo "📦 Getting dependencies..."
-    flutter pub get
-
-    echo "🚀 Running Android app..."
-    flutter run
-
-    echo "✅ Android setup + run done!"
+# Auto-detect Physical iOS Device ID (skips simulators)
+detect_ios() {
+    flutter devices | grep '• ios •' | grep -v 'simulator' | head -n 1 | awk -F '•' '{print $2}' | xargs
 }
 
-
-# --- iOS Setup ---
-function ios_setup() {
-    echo "🧹 Cleaning iOS project..."
-    flutter clean
-
-    echo "📦 Getting dependencies..."
-    flutter pub get
-
-    echo "🍎 Installing iOS pods..."
-    cd ios || exit
-    pod install
-    cd ..
-
-    echo "🤖 Building iOS app..."
-    flutter build ios
-    open ios/Runner.xcworkspace
-    echo "✅ iOS setup done!"
+# Auto-detect Simulator Device ID
+detect_sim() {
+    flutter devices | grep '(simulator)' | head -n 1 | awk -F '•' '{print $2}' | xargs
 }
 
-# --- Run Based on Target ---
-case "$TARGET" in
-    android)
-        android_setup
+# Helpers
+clean_get() { 
+    echo "🧹 Cleaning and fetching packages..."
+    flutter clean && flutter pub get 
+}
+ios_setup() { 
+    clean_get
+    echo "🍎 Installing iOS Pods..."
+    cd ios && rm -rf Pods Podfile.lock && pod install && cd ..
+}
+
+echo "🚀 Executing: $1"
+
+case "$1" in
+    run)             clean_get && flutter run ;;
+    sim)             
+        ID=$(detect_sim)
+        if [ -z "$ID" ]; then
+             echo "❌ ERROR: No simulator detected. Please open Simulator.app."
+             exit 1
+        fi
+        ios_setup && flutter run -d "$ID" 
         ;;
-    ios)
-        ios_setup
+    ios-release)     
+        ID=$(detect_ios)
+        if [ -z "$ID" ]; then
+            echo "❌ ERROR: No physical iPhone detected. Connect via USB or ensure Wireless debugging is active."
+            exit 1
+        fi
+        ios_setup && flutter run --release -d "$ID" 
         ;;
-    all)
-        android_setup
-        ios_setup
-        ;;
-    *)
-        echo "Usage: $0 [android|ios|all]"
-        exit 1
-        ;;
+    android-release) clean_get && flutter run --release -d android ;;
+    apk)             clean_get && flutter build apk --release ;;
+    bundle)          clean_get && flutter build appbundle --release ;;
+    ipa)             ios_setup && flutter build ipa --export-options-plist=ios/ExportOptions.plist ;;
+    build-ios)       ios_setup && flutter build ios --release ;;
+    ios)             ios_setup ;;
+    clean)           clean_get ;;
+    *)               echo "Usage: ./setup.sh [run|sim|ios-release|android-release|apk|bundle|ipa|build-ios|ios|clean]" ;;
 esac
-
-echo "🎉 All done!"
-
-
-
-# adb kill-server
-# adb start-server
-# adbwire
-
-# flutter clean
-# flutter pub get
-# flutter build appbundle --release
-# flutter run
-# flutter build apk --release

@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:path/path.dart' as p;
 import '../core/constants.dart';
 import '../data/models/user_profile.dart';
 import '../services/notification_service.dart';
@@ -22,7 +25,7 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
         final profiles = box.values.toList();
         state = profiles;
         if (profiles.length >= 2) {
-          _updateHomeWidget(profiles[0], profiles[1]);
+          _updateHomeWidget(profiles[0], profiles[1]).then((_) {});
         }
       }
     }
@@ -42,7 +45,7 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     state = [me, partner];
 
     // Update Home Widget
-    _updateHomeWidget(me, partner);
+    await _updateHomeWidget(me, partner);
 
     // Schedule Special Events
     try {
@@ -84,7 +87,7 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     }
   }
 
-  void _updateHomeWidget(UserProfile me, UserProfile partner) {
+  Future<void> _updateHomeWidget(UserProfile me, UserProfile partner) async {
     final startDate = me.relationshipStartDate ?? DateTime.now();
     // Normalize to midnight for consistent day counting
     final normalizedStart = DateTime(
@@ -102,22 +105,88 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
     final initial1 = name1.isNotEmpty ? name1[0].toUpperCase() : '?';
     final initial2 = name2.isNotEmpty ? name2[0].toUpperCase() : '?';
 
-    HomeWidget.saveWidgetData<String>('name1', name1);
-    HomeWidget.saveWidgetData<String>('name2', name2);
-    HomeWidget.saveWidgetData<String>('initial1', initial1);
-    HomeWidget.saveWidgetData<String>('initial2', initial2);
-    HomeWidget.saveWidgetData<String>('days', days.toString());
-    HomeWidget.saveWidgetData<int>(
+    // Debug logging
+    print('📱 Updating widget data:');
+    print('   Name1: $name1, Name2: $name2');
+    print('   Initial1: $initial1, Initial2: $initial2');
+    print('   Days: $days');
+    print('   StartDate: ${normalizedStart.millisecondsSinceEpoch}');
+    print('   Avatar1: ${me.avatarPath}');
+    print('   Avatar2: ${partner.avatarPath}');
+
+    // Save all data to widget (await each call)
+    await HomeWidget.saveWidgetData<String>('name1', name1);
+    await HomeWidget.saveWidgetData<String>('name2', name2);
+    await HomeWidget.saveWidgetData<String>('initial1', initial1);
+    await HomeWidget.saveWidgetData<String>('initial2', initial2);
+    await HomeWidget.saveWidgetData<String>('days', days.toString());
+    await HomeWidget.saveWidgetData<int>(
       'startDate',
       normalizedStart.millisecondsSinceEpoch,
     );
-    // Save avatar paths for widget images
-    HomeWidget.saveWidgetData<String>('avatar1Path', me.avatarPath ?? '');
-    HomeWidget.saveWidgetData<String>('avatar2Path', partner.avatarPath ?? '');
+
+    // Save avatar paths for widget images (await to ensure copy completes)
+    await _saveAvatar(me.avatarPath, 'avatar1Path');
+    await _saveAvatar(partner.avatarPath, 'avatar2Path');
+
+    print('✅ Widget data saved, updating widgets...');
 
     // Update both widgets
-    HomeWidget.updateWidget(name: 'CoupleWidget', androidName: 'CoupleWidget');
-    HomeWidget.updateWidget(name: 'DaysWidget', androidName: 'DaysWidget');
+    await HomeWidget.updateWidget(
+      name: 'CoupleWidget',
+      androidName: 'CoupleWidget',
+    );
+    await HomeWidget.updateWidget(
+      name: 'DaysWidget',
+      androidName: 'DaysWidget',
+    );
+
+    print('✅ Widgets updated successfully');
+  }
+
+  Future<void> _saveAvatar(String? path, String key) async {
+    print('   🖼️ Saving avatar for $key: $path');
+
+    if (path == null || path.isEmpty) {
+      await HomeWidget.saveWidgetData<String>(key, '');
+      print('   ⚠️ No avatar path for $key');
+      return;
+    }
+
+    String finalPath = path;
+
+    if (Platform.isIOS) {
+      try {
+        print('   📱 iOS: Copying image to App Group...');
+        const channel = MethodChannel('com.sajon.couple_app/app_group');
+        final String? appGroupPath = await channel.invokeMethod(
+          'getAppGroupPath',
+        );
+
+        if (appGroupPath != null) {
+          print('   📁 App Group path: $appGroupPath');
+          final fileName = p.basename(path);
+          final newPath = p.join(appGroupPath, fileName);
+
+          // Check if source file exists
+          if (await File(path).exists()) {
+            await File(path).copy(newPath);
+            finalPath = fileName; // Save only the filename for the iOS widget
+            print('   ✅ Image copied to: $newPath');
+            print('   💾 Saving filename to widget: $fileName');
+          } else {
+            print('   ❌ Source file does not exist: $path');
+          }
+        } else {
+          print('   ❌ App Group path is null');
+        }
+      } catch (e) {
+        print('   ❌ Failed to copy image to app group: $e');
+      }
+    }
+
+    await HomeWidget.saveWidgetData<String>(key, finalPath);
+    print('   ✅ Avatar saved for $key: $finalPath');
   }
 
   Future<void> reset() async {
