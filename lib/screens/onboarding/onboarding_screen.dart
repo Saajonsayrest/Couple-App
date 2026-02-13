@@ -63,7 +63,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _pickImage(bool isMe) async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 600,
+      maxHeight: 600,
+      imageQuality: 70,
+    );
     if (image != null) {
       final directory = await getApplicationDocumentsDirectory();
       final String fileName = p.basename(image.path);
