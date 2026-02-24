@@ -6,11 +6,13 @@ class AuthState {
   final AuthUser? user;
   final bool isLoading;
   final String? error;
+  final bool isInitialized;
   final bool isAuthenticated;
 
   AuthState({
     this.user,
     this.isLoading = false,
+    this.isInitialized = false,
     this.error,
     this.isAuthenticated = false,
   });
@@ -18,13 +20,15 @@ class AuthState {
   AuthState copyWith({
     AuthUser? user,
     bool? isLoading,
+    bool? isInitialized,
     String? error,
     bool? isAuthenticated,
   }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
-      error: error, // If we don't pass error, it becomes null
+      isInitialized: isInitialized ?? this.isInitialized,
+      error: error,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
     );
   }
@@ -47,12 +51,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: AuthUser.fromJson(userData),
           isAuthenticated: true,
           isLoading: false,
+          isInitialized: true,
         );
       } else {
-        state = state.copyWith(isLoading: false, isAuthenticated: false);
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: false,
+          isInitialized: true,
+        );
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+        isInitialized: true,
+      );
     }
   }
 
@@ -65,6 +78,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: user,
         isAuthenticated: true,
         isLoading: false,
+        isInitialized: true,
       );
       return true;
     } catch (e) {
@@ -82,6 +96,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: user,
         isAuthenticated: true,
         isLoading: false,
+        isInitialized: true,
       );
       return true;
     } catch (e) {

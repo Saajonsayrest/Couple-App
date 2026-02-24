@@ -21,6 +21,18 @@ class UserProfile {
     this.serverId,
   });
 
+  String? get avatarUrl {
+    if (avatarPath == null) return null;
+    if (avatarPath!.startsWith('http') ||
+        avatarPath!.startsWith('/Users') ||
+        avatarPath!.startsWith('/data')) {
+      return avatarPath;
+    }
+    // Relative path from server
+    final cleanPath = avatarPath!.startsWith('/') ? avatarPath : '/$avatarPath';
+    return 'https://couple-app-backend.vercel.app$cleanPath';
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'name': name,

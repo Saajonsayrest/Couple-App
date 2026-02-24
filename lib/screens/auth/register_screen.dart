@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/loading_overlay.dart';
 
 class RegisterScreen extends HookConsumerWidget {
   const RegisterScreen({super.key});
@@ -15,8 +16,14 @@ class RegisterScreen extends HookConsumerWidget {
     final confirmPasswordController = useTextEditingController();
     final authState = ref.watch(authProvider);
 
-    // Listen for errors
+    // Listen for auth state changes
     ref.listen(authProvider, (previous, next) {
+      if (previous?.isLoading == false && next.isLoading == true) {
+        LoadingOverlay.show(context, message: 'Creating account...');
+      } else if (previous?.isLoading == true && next.isLoading == false) {
+        LoadingOverlay.hide(context);
+      }
+
       if (next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

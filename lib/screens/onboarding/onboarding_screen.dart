@@ -11,6 +11,7 @@ import '../../providers/profile_provider.dart';
 import '../../core/app_theme.dart';
 import '../../data/models/user_profile.dart';
 import '../../core/globals.dart';
+import '../../widgets/loading_overlay.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -107,11 +108,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       isPartner: true,
     );
 
+    LoadingOverlay.show(context, message: 'Creating your story...');
+
     await ref
         .read(profileProvider.notifier)
         .updateProfiles(me: myProfile, partner: partnerProfile);
 
     if (mounted) {
+      LoadingOverlay.hide(context);
       scaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
           content: Text("Welcome! Let's start your journey ❤️"),
@@ -420,13 +424,21 @@ class _ProfileFormState extends State<_ProfileForm> {
                         size: 40,
                       )
                     : ClipOval(
-                        child: widget.avatarPath!.startsWith('http')
-                            ? Image.network(
-                                widget.avatarPath!,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.file(
-                                File(widget.avatarPath!),
+                        child:
+                            (widget.avatarPath!.startsWith('http') ||
+                                widget.avatarPath!.startsWith('/Users') ||
+                                widget.avatarPath!.startsWith('/data'))
+                            ? (widget.avatarPath!.startsWith('http')
+                                  ? Image.network(
+                                      widget.avatarPath!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.file(
+                                      File(widget.avatarPath!),
+                                      fit: BoxFit.cover,
+                                    ))
+                            : Image.network(
+                                'https://couple-app-backend.vercel.app${widget.avatarPath!.startsWith('/') ? widget.avatarPath : '/$widget.avatarPath'}',
                                 fit: BoxFit.cover,
                               ),
                       ),

@@ -11,6 +11,7 @@ import '../../data/models/reminder.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/timeline_provider.dart';
 import '../../providers/reminder_provider.dart';
+import '../../widgets/loading_overlay.dart';
 
 class TimelineScreen extends ConsumerStatefulWidget {
   const TimelineScreen({super.key});
@@ -20,11 +21,6 @@ class TimelineScreen extends ConsumerStatefulWidget {
 }
 
 class _TimelineScreenState extends ConsumerState<TimelineScreen> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   List<TimelineEvent> _processEvents(
     UserProfile me,
     UserProfile partner,
@@ -423,7 +419,42 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Listen for timeline state changes
+    ref.listen(timelineProvider, (previous, next) {
+      if (previous?.isLoading == false && next.isLoading == true) {
+        LoadingOverlay.show(context, message: 'Processing...');
+      } else if (previous?.isLoading == true && next.isLoading == false) {
+        LoadingOverlay.hide(context);
+      }
+
+      if (next.error != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error!)));
+      }
+    });
+
+    // Listen for reminder state changes
+    ref.listen(reminderProvider, (previous, next) {
+      if (previous?.isLoading == false && next.isLoading == true) {
+        LoadingOverlay.show(context, message: 'Processing...');
+      } else if (previous?.isLoading == true && next.isLoading == false) {
+        LoadingOverlay.hide(context);
+      }
+
+      if (next.error != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error!)));
+      }
+    });
+
     final profiles = ref.watch(profileProvider);
     if (profiles.isEmpty) {
       return const Scaffold(body: Center(child: Text('No profiles found')));

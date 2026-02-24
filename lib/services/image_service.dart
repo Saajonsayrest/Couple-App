@@ -14,9 +14,9 @@ class ImageService {
   }) async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 80,
+      maxWidth: 400,
+      maxHeight: 400,
+      imageQuality: 70,
     );
 
     if (image == null) return null;

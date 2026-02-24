@@ -15,6 +15,7 @@ import '../../widgets/liquid_background.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/timeline_provider.dart';
 import '../../providers/reminder_provider.dart';
+import '../../widgets/loading_overlay.dart';
 import '../../core/globals.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -24,6 +25,26 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch for profile changes
     // Watch for profile, timeline, and reminder changes
+    // Listen for profile state changes (e.g. during sync)
+    ref.listen(profileProvider, (previous, next) {
+      // Note: ProfileNotifier doesn't have an isLoading state currently.
+    });
+
+    // Listen for reminder state changes
+    ref.listen(reminderProvider, (previous, next) {
+      if (previous?.isLoading == false && next.isLoading == true) {
+        LoadingOverlay.show(context, message: 'Updating...');
+      } else if (previous?.isLoading == true && next.isLoading == false) {
+        LoadingOverlay.hide(context);
+      }
+
+      if (next.error != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error!)));
+      }
+    });
+
     final profiles = ref.watch(profileProvider);
     final timelineState = ref.watch(timelineProvider);
     final reminderState = ref.watch(reminderProvider);
@@ -111,8 +132,8 @@ class HomeScreen extends ConsumerWidget {
                   name2: partnerProfile.nickname.isNotEmpty
                       ? partnerProfile.nickname
                       : partnerProfile.name,
-                  avatar1: myProfile.avatarPath,
-                  avatar2: partnerProfile.avatarPath,
+                  avatar1: myProfile.avatarUrl,
+                  avatar2: partnerProfile.avatarUrl,
                   startDate: startDate,
                 ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
               ),

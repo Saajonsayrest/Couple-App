@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../services/image_service.dart';
 import '../../providers/profile_provider.dart';
 import '../../core/globals.dart';
+import '../../widgets/loading_overlay.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -79,6 +80,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final me = profiles[0];
     final partner = profiles[1];
 
+    LoadingOverlay.show(context, message: 'Saving changes...');
+
     // Update objects
     me.name = _myNameController.text.trim();
     me.nickname = _myNicknameController.text.trim();
@@ -97,6 +100,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         .updateProfiles(me: me, partner: partner);
 
     if (mounted) {
+      LoadingOverlay.hide(context);
       scaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
           content: Text('Details Updated!'),
@@ -228,9 +232,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 border: Border.all(color: color.withOpacity(0.3), width: 2),
                 image: avatarPath != null
                     ? DecorationImage(
-                        image: avatarPath.startsWith('http')
-                            ? NetworkImage(avatarPath)
-                            : FileImage(File(avatarPath)) as ImageProvider,
+                        image:
+                            (avatarPath.startsWith('http') ||
+                                avatarPath.startsWith('/Users') ||
+                                avatarPath.startsWith('/data'))
+                            ? (avatarPath.startsWith('http')
+                                  ? NetworkImage(avatarPath)
+                                  : FileImage(File(avatarPath))
+                                        as ImageProvider)
+                            : NetworkImage(
+                                'https://couple-app-backend.vercel.app${avatarPath.startsWith('/') ? avatarPath : '/$avatarPath'}',
+                              ),
                         fit: BoxFit.cover,
                       )
                     : null,

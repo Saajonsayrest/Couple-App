@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/loading_overlay.dart';
 
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -14,8 +15,14 @@ class LoginScreen extends HookConsumerWidget {
     final passwordController = useTextEditingController();
     final authState = ref.watch(authProvider);
 
-    // Listen for errors
+    // Listen for auth state changes
     ref.listen(authProvider, (previous, next) {
+      if (previous?.isLoading == false && next.isLoading == true) {
+        LoadingOverlay.show(context, message: 'Logging in...');
+      } else if (previous?.isLoading == true && next.isLoading == false) {
+        LoadingOverlay.hide(context);
+      }
+
       if (next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
