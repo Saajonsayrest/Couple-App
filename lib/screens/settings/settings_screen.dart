@@ -7,6 +7,7 @@ import '../../core/app_theme.dart';
 import '../../core/constants.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/notification_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -102,6 +103,15 @@ class SettingsScreen extends ConsumerWidget {
                     title: 'App Theme',
                     subtitle: 'Choose your favorite colors',
                     onTap: () => _showThemeSelector(context, ref),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('Connection'),
+                  const SizedBox(height: 12),
+                  _SettingsTile(
+                    icon: Icons.link_rounded,
+                    title: 'Link with Partner',
+                    subtitle: 'Connect your accounts together',
+                    onTap: () => _showLinkingDialog(context, ref),
                   ),
                   const SizedBox(height: 32),
                   _buildSectionTitle('Danger Zone'),
@@ -255,6 +265,126 @@ class SettingsScreen extends ConsumerWidget {
             child: const Text('Reset'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLinkingDialog(BuildContext context, WidgetRef ref) {
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+    final settingsState = ref.watch(settingsProvider);
+    final linkController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Partner Linking ❤️',
+                  style: GoogleFonts.varelaRound(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                if (settingsState.inviteCode == null &&
+                    !settingsState.isLoading)
+                  ElevatedButton(
+                    onPressed: () => settingsNotifier.generateInviteCode(),
+                    child: const Text('Generate My Invite Code'),
+                  )
+                else if (settingsState.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else ...[
+                  const Text(
+                    'Share this code with your partner:',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SelectableText(
+                      settingsState.inviteCode ?? '',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 24),
+                const Text(
+                  'Or enter your partner\'s code:',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: linkController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter Code',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  textAlign: TextAlign.center,
+                  onChanged: (v) => setModalState(() {}),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: linkController.text.length < 6
+                      ? null
+                      : () async {
+                          final success = await settingsNotifier
+                              .linkWithPartner(linkController.text.trim());
+                          if (success && context.mounted) {
+                            Navigator.pop(context);
+                            // Refresh profiles
+                            ref.read(profileProvider.notifier).syncFromApi();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Linked successfully!'),
+                              ),
+                            );
+                          } else if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Invalid code')),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Link Now'),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

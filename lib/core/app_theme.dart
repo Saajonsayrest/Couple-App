@@ -227,6 +227,14 @@ class AppColors {
   static const Color textMain = Color(0xFF1A1A1A); // High contrast
   static const Color textSub = Color(0xFF555555); // Darker sub text
   static const Color white = Colors.white;
+
+  // Shortcuts for Auth UI / Legacy
+  static const Color primary = Color(
+    0xFFFF858F,
+  ); // Matching cotton_candy primary
+  static const Color textPrimary = Color(0xFF1A1A1A);
+  static const Color textSecondary = Color(0xFF555555);
+
   // These are now handled by the palette system but kept for backward compatibility if needed
   static const Color background = Color(0xFFFFF9F5);
   static const Color malePrimary = Color(0xFF89CFF0);

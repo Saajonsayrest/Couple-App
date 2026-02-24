@@ -13,6 +13,8 @@ import 'services/app_update_service.dart';
 import 'core/globals.dart';
 
 import 'data/models/user_profile.dart';
+import 'data/models/timeline_event.dart';
+import 'data/models/reminder.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,9 +29,12 @@ void main() async {
   await Hive.openBox(AppConstants.settingsBox);
 
   Hive.registerAdapter(UserProfileAdapter());
+  Hive.registerAdapter(TimelineEventAdapter());
+  Hive.registerAdapter(ReminderAdapter());
+
   await Hive.openBox<UserProfile>(AppConstants.userBox);
-  await Hive.openBox(AppConstants.timelineBox);
-  await Hive.openBox(AppConstants.remindersBox);
+  await Hive.openBox<TimelineEvent>(AppConstants.timelineBox);
+  await Hive.openBox<Reminder>(AppConstants.remindersBox);
 
   // Initialize Notifications
   final notificationService = NotificationService();
@@ -66,7 +71,7 @@ class _MyAppState extends ConsumerState<MyApp> {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getTheme(themeType),
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
       builder: (context, child) {
         // UpgradeAlert handles iOS store updates & Android fallback
         // Forcing latest version: showIgnore=false, showLater=false

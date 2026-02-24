@@ -3,19 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/couple_card.dart';
 import '../../core/app_theme.dart';
-import '../../core/constants.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/game_data.dart';
 import '../../data/models/timeline_event.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/models/reminder.dart';
-import '../../services/notification_service.dart';
 import '../../widgets/liquid_background.dart';
 import '../../providers/profile_provider.dart';
+import '../../providers/timeline_provider.dart';
+import '../../providers/reminder_provider.dart';
 import '../../core/globals.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -24,8 +23,10 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch for profile changes
+    // Watch for profile, timeline, and reminder changes
     final profiles = ref.watch(profileProvider);
-    final timelineBox = Hive.box(AppConstants.timelineBox);
+    final timelineState = ref.watch(timelineProvider);
+    final reminderState = ref.watch(reminderProvider);
 
     if (profiles.length < 2) {
       return Scaffold(
@@ -46,7 +47,7 @@ class HomeScreen extends ConsumerWidget {
     final upcomingEvents = _getUpcomingEvents(
       myProfile,
       partnerProfile,
-      timelineBox,
+      timelineState.events,
     );
 
     return Scaffold(
@@ -148,7 +149,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Reminders Section
-              _buildRemindersSection(context),
+              _buildRemindersSection(context, ref, reminderState),
 
               const SizedBox(height: 24),
 
@@ -184,15 +185,14 @@ class HomeScreen extends ConsumerWidget {
   List<_UpcomingEventModel> _getUpcomingEvents(
     UserProfile me,
     UserProfile partner,
-    Box timelineBox,
+    List<TimelineEvent> userEvents,
   ) {
     final List<_UpcomingEventModel> list = [];
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // 1. Check Timeline Box for manual events
-    final userEvents = timelineBox.values
-        .map((e) => TimelineEvent.fromMap(Map<dynamic, dynamic>.from(e)))
+    // 1. Process events from provider
+    final filteredEvents = userEvents
         .where(
           (e) =>
               !e.isSystemEvent &&
@@ -200,7 +200,7 @@ class HomeScreen extends ConsumerWidget {
         )
         .toList();
 
-    for (var e in userEvents) {
+    for (var e in filteredEvents) {
       list.add(
         _UpcomingEventModel(
           title: e.title,
@@ -408,9 +408,11 @@ class HomeScreen extends ConsumerWidget {
     ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.1, end: 0);
   }
 
-  Widget _buildRemindersSection(BuildContext context) {
-    final remindersBox = Hive.box(AppConstants.remindersBox);
-
+  Widget _buildRemindersSection(
+    BuildContext context,
+    WidgetRef ref,
+    ReminderState reminderState,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -428,59 +430,58 @@ class HomeScreen extends ConsumerWidget {
                   color: Theme.of(context).primaryColor,
                   size: 24,
                 ),
-                onPressed: () => _showAddReminderDialog(context),
+                onPressed: () => _showAddReminderDialog(context, ref),
               ),
             ],
           ),
         ),
-        ValueListenableBuilder(
-          valueListenable: remindersBox.listenable(),
-          builder: (context, Box box, _) {
-            final reminders = box.values
-                .map((e) => Reminder.fromMap(Map<dynamic, dynamic>.from(e)))
-                .toList();
+        () {
+          final reminders = List<Reminder>.from(reminderState.reminders);
 
-            reminders.sort((a, b) {
-              if (a.isCompleted != b.isCompleted) {
-                return a.isCompleted ? -1 : 1; // Completed ones first
-              }
-              return a.dateTime.compareTo(b.dateTime);
-            });
+          reminders.sort((a, b) {
+            if (a.isCompleted != b.isCompleted) {
+              return a.isCompleted ? 1 : -1; // Incomplete ones first
+            }
+            return a.dateTime.compareTo(b.dateTime);
+          });
 
-            if (reminders.isEmpty) {
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.withOpacity(0.1)),
-                ),
-                child: Center(
-                  child: Text(
-                    "No pending reminders. ☁️",
-                    style: GoogleFonts.quicksand(
-                      color: AppColors.textSub,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+          if (reminders.isEmpty) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.withOpacity(0.1)),
+              ),
+              child: Center(
+                child: Text(
+                  "No pending reminders. ☁️",
+                  style: GoogleFonts.quicksand(
+                    color: AppColors.textSub,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              );
-            }
-
-            return Column(
-              children: reminders
-                  .map((r) => _buildReminderItem(context, r))
-                  .toList(),
+              ),
             );
-          },
-        ),
+          }
+
+          return Column(
+            children: reminders
+                .map((r) => _buildReminderItem(context, ref, r))
+                .toList(),
+          );
+        }(),
       ],
     );
   }
 
-  Widget _buildReminderItem(BuildContext context, Reminder reminder) {
+  Widget _buildReminderItem(
+    BuildContext context,
+    WidgetRef ref,
+    Reminder reminder,
+  ) {
     final color = Theme.of(context).primaryColor;
     final isOverdue = reminder.dateTime.isBefore(DateTime.now());
 
@@ -581,38 +582,24 @@ class HomeScreen extends ConsumerWidget {
                     : color.withOpacity(0.6),
                 onTap: () async {
                   reminder.isCompleted = !reminder.isCompleted;
-                  final box = Hive.box(AppConstants.remindersBox);
-                  final key = box.keys.firstWhere(
-                    (k) =>
-                        Reminder.fromMap(
-                          Map<dynamic, dynamic>.from(box.get(k)),
-                        ).id ==
-                        reminder.id,
-                  );
-                  await box.put(key, reminder.toMap());
-
-                  if (reminder.isCompleted) {
-                    await NotificationService().cancelReminder(reminder.id);
-                  } else {
-                    // Only re-schedule if it's in the future
-                    if (reminder.dateTime.isAfter(DateTime.now())) {
-                      await NotificationService().scheduleReminder(reminder);
-                    }
-                  }
+                  ref.read(reminderProvider.notifier).updateReminder(reminder);
                 },
               ),
               const SizedBox(width: 4),
               _buildActionButton(
                 icon: Icons.edit_note_rounded,
                 color: color.withOpacity(0.6),
-                onTap: () =>
-                    _showAddReminderDialog(context, reminderToEdit: reminder),
+                onTap: () => _showAddReminderDialog(
+                  context,
+                  ref,
+                  reminderToEdit: reminder,
+                ),
               ),
               const SizedBox(width: 4),
               _buildActionButton(
                 icon: Icons.delete_outline_rounded,
                 color: Colors.red.withOpacity(0.55),
-                onTap: () => _confirmDeleteReminder(context, reminder),
+                onTap: () => _confirmDeleteReminder(context, ref, reminder),
               ),
             ],
           ),
@@ -639,7 +626,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmDeleteReminder(BuildContext context, Reminder reminder) {
+  void _confirmDeleteReminder(
+    BuildContext context,
+    WidgetRef ref,
+    Reminder reminder,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -657,22 +648,12 @@ class HomeScreen extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final box = Hive.box(AppConstants.remindersBox);
-              final key = box.keys.firstWhere(
-                (k) =>
-                    Reminder.fromMap(
-                      Map<dynamic, dynamic>.from(box.get(k)),
-                    ).id ==
-                    reminder.id,
-                orElse: () => null,
+              ref
+                  .read(reminderProvider.notifier)
+                  .deleteReminder(reminder.id, reminder.serverId);
+              scaffoldMessengerKey.currentState?.showSnackBar(
+                const SnackBar(content: Text('Reminder Deleted')),
               );
-              if (key != null) {
-                await box.delete(key);
-                await NotificationService().cancelReminder(reminder.id);
-                scaffoldMessengerKey.currentState?.showSnackBar(
-                  const SnackBar(content: Text('Reminder Deleted')),
-                );
-              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -682,7 +663,8 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showAddReminderDialog(
-    BuildContext context, {
+    BuildContext context,
+    WidgetRef ref, {
     Reminder? reminderToEdit,
   }) {
     final titleController = TextEditingController(text: reminderToEdit?.title);
@@ -767,16 +749,15 @@ class HomeScreen extends ConsumerWidget {
                 ElevatedButton(
                   onPressed: () async {
                     if (titleController.text.isNotEmpty) {
-                      final box = Hive.box(AppConstants.remindersBox);
-
                       if (reminderToEdit == null) {
                         final reminder = Reminder(
                           id: const Uuid().v4(),
                           title: titleController.text,
                           dateTime: selectedDate,
                         );
-                        await box.add(reminder.toMap());
-                        await NotificationService().scheduleReminder(reminder);
+                        ref
+                            .read(reminderProvider.notifier)
+                            .addReminder(reminder);
 
                         scaffoldMessengerKey.currentState?.showSnackBar(
                           const SnackBar(
@@ -787,18 +768,9 @@ class HomeScreen extends ConsumerWidget {
                       } else {
                         reminderToEdit.title = titleController.text;
                         reminderToEdit.dateTime = selectedDate;
-
-                        final key = box.keys.firstWhere(
-                          (k) =>
-                              Reminder.fromMap(
-                                Map<dynamic, dynamic>.from(box.get(k)),
-                              ).id ==
-                              reminderToEdit.id,
-                        );
-                        await box.put(key, reminderToEdit.toMap());
-                        await NotificationService().scheduleReminder(
-                          reminderToEdit,
-                        );
+                        ref
+                            .read(reminderProvider.notifier)
+                            .updateReminder(reminderToEdit);
 
                         scaffoldMessengerKey.currentState?.showSnackBar(
                           const SnackBar(
@@ -807,7 +779,6 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         );
                       }
-
                       if (context.mounted) Navigator.pop(context);
                     }
                   },

@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/app_theme.dart';
-import '../../core/constants.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/timeline_event.dart';
 import '../../data/models/reminder.dart';
-import '../../services/notification_service.dart';
 import '../../providers/profile_provider.dart';
+import '../../providers/timeline_provider.dart';
+import '../../providers/reminder_provider.dart';
 
 class TimelineScreen extends ConsumerStatefulWidget {
   const TimelineScreen({super.key});
@@ -21,21 +20,20 @@ class TimelineScreen extends ConsumerStatefulWidget {
 }
 
 class _TimelineScreenState extends ConsumerState<TimelineScreen> {
-  late Box _timelineBox;
-
   @override
   void initState() {
     super.initState();
-    _timelineBox = Hive.box(AppConstants.timelineBox);
   }
 
-  List<TimelineEvent> _processEvents(UserProfile me, UserProfile partner) {
+  List<TimelineEvent> _processEvents(
+    UserProfile me,
+    UserProfile partner,
+    List<TimelineEvent> userEvents,
+    List<Reminder> reminders,
+  ) {
     List<TimelineEvent> events = [];
 
-    // 1. User Created Events
-    final userEvents = _timelineBox.values
-        .map((e) => TimelineEvent.fromMap(Map<dynamic, dynamic>.from(e)))
-        .toList();
+    // 1. User Created Events (from provider)
     events.addAll(userEvents);
 
     // 2. System Events
@@ -114,10 +112,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
       }
     }
 
-    // 3. User Reminders
-    final remindersBox = Hive.box(AppConstants.remindersBox);
-    final reminders = remindersBox.values
-        .map((e) => Reminder.fromMap(Map<dynamic, dynamic>.from(e)))
+    // 3. User Reminders (from provider)
+    final timelineReminders = reminders
         .where((r) => !r.isCompleted)
         .map(
           (r) => TimelineEvent(
@@ -129,7 +125,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
           ),
         )
         .toList();
-    events.addAll(reminders);
+    events.addAll(timelineReminders);
 
     // Sort, Unique, Sort
     final Map<String, TimelineEvent> uniqueEvents = {};
@@ -242,27 +238,22 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                             title: titleController.text,
                             body: bodyController.text,
                           );
-                          _timelineBox.add(newEvent.toMap());
+                          ref
+                              .read(timelineProvider.notifier)
+                              .addEvent(newEvent);
                         } else {
                           final updatedEvent = TimelineEvent(
                             id: eventToEdit.id,
                             date: selectedDate,
                             title: titleController.text,
                             body: bodyController.text,
+                            serverId: eventToEdit.serverId,
                           );
-                          final keyToUpdate = _timelineBox.keys.firstWhere(
-                            (k) =>
-                                TimelineEvent.fromMap(
-                                  Map<dynamic, dynamic>.from(
-                                    _timelineBox.get(k),
-                                  ),
-                                ).id ==
-                                eventToEdit.id,
-                          );
-                          _timelineBox.put(keyToUpdate, updatedEvent.toMap());
+                          ref
+                              .read(timelineProvider.notifier)
+                              .updateEvent(updatedEvent);
                         }
                         Navigator.pop(context);
-                        setState(() {});
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -286,43 +277,19 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
     );
   }
 
-  void _deleteEvent(String id) async {
-    if (id.startsWith('reminder_')) {
-      final actualId = id.replaceFirst('reminder_', '');
-      final box = Hive.box(AppConstants.remindersBox);
-      final keyToDelete = box.keys.firstWhere(
-        (k) =>
-            Reminder.fromMap(Map<dynamic, dynamic>.from(box.get(k))).id ==
-            actualId,
-        orElse: () => null,
-      );
-      if (keyToDelete != null) {
-        await box.delete(keyToDelete);
-        await NotificationService().cancelReminder(actualId);
-        setState(() {});
-      }
+  void _deleteEvent(TimelineEvent event) async {
+    if (event.id.startsWith('reminder_')) {
+      final actualId = event.id.replaceFirst('reminder_', '');
+      ref.read(reminderProvider.notifier).deleteReminder(actualId, null);
       return;
     }
 
-    final keyToDelete = _timelineBox.keys.firstWhere(
-      (k) =>
-          TimelineEvent.fromMap(
-            Map<dynamic, dynamic>.from(_timelineBox.get(k)),
-          ).id ==
-          id,
-      orElse: () => null,
-    );
-    if (keyToDelete != null) {
-      await _timelineBox.delete(keyToDelete);
-      setState(() {});
-    }
+    ref.read(timelineProvider.notifier).deleteEvent(event.id, event.serverId);
   }
 
   void _showReminderEditor(String reminderId) {
-    final box = Hive.box(AppConstants.remindersBox);
-    final reminder = box.values
-        .map((e) => Reminder.fromMap(Map<dynamic, dynamic>.from(e)))
-        .firstWhere((r) => r.id == reminderId);
+    final reminders = ref.read(reminderProvider).reminders;
+    final reminder = reminders.firstWhere((r) => r.id == reminderId);
 
     final titleController = TextEditingController(text: reminder.title);
     DateTime selectedDate = reminder.dateTime;
@@ -407,18 +374,11 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                       reminder.title = titleController.text;
                       reminder.dateTime = selectedDate;
 
-                      final key = box.keys.firstWhere(
-                        (k) =>
-                            Reminder.fromMap(
-                              Map<dynamic, dynamic>.from(box.get(k)),
-                            ).id ==
-                            reminder.id,
-                      );
-                      await box.put(key, reminder.toMap());
-                      await NotificationService().scheduleReminder(reminder);
+                      ref
+                          .read(reminderProvider.notifier)
+                          .updateReminder(reminder);
 
                       if (context.mounted) Navigator.pop(context);
-                      setState(() {});
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -439,7 +399,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
     );
   }
 
-  void _confirmDelete(String id) {
+  void _confirmDelete(TimelineEvent event) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -453,7 +413,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _deleteEvent(id);
+              _deleteEvent(event);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -471,6 +431,9 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
     final me = profiles[0];
     final partner = profiles[1];
 
+    final timelineState = ref.watch(timelineProvider);
+    final reminderState = ref.watch(reminderProvider);
+
     return Column(
       children: [
         SafeArea(
@@ -480,7 +443,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(width: 48), // Spacer to center title
+                const SizedBox(width: 48),
                 Text(
                   'Our Journey',
                   style: GoogleFonts.outfit(
@@ -494,61 +457,71 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
           ),
         ),
         Expanded(
-          child: ValueListenableBuilder(
-            valueListenable: _timelineBox.listenable(),
-            builder: (context, Box box, _) {
-              final events = _processEvents(me, partner);
+          child: Builder(
+            builder: (context) {
+              final events = _processEvents(
+                me,
+                partner,
+                timelineState.events,
+                reminderState.reminders,
+              );
               if (events.isEmpty) {
                 return _buildEmptyTimeline();
               }
 
-              return ListView.builder(
-                padding: EdgeInsets.only(
-                  left: 12,
-                  right: 12,
-                  top: 24,
-                  bottom: MediaQuery.of(context).padding.bottom + 120,
-                ),
-                itemCount: events.length,
-                cacheExtent: 1000,
-                itemBuilder: (context, index) {
-                  final event = events[index];
-                  final daysSince = event.date
-                      .difference(me.relationshipStartDate ?? DateTime.now())
-                      .inDays;
-                  final isEventLeft = index % 2 == 0;
-
-                  return _TimelineItem(
-                        event: event,
-                        dayCount: daysSince >= 0 ? daysSince + 1 : null,
-                        isLeft: isEventLeft,
-                        isFirst: index == 0,
-                        isLast: index == events.length - 1,
-                        color: Theme.of(context).primaryColor,
-                        onDelete: event.isSystemEvent
-                            ? null
-                            : () => _confirmDelete(event.id),
-                        onEdit: event.isSystemEvent
-                            ? null
-                            : () {
-                                if (event.id.startsWith('reminder_')) {
-                                  _showReminderEditor(
-                                    event.id.replaceFirst('reminder_', ''),
-                                  );
-                                } else {
-                                  _showEventEditor(eventToEdit: event);
-                                }
-                              },
-                      )
-                      .animate()
-                      .fadeIn(delay: (50 * index).clamp(0, 400).ms)
-                      .slideY(
-                        begin: 0.1,
-                        end: 0,
-                        duration: 400.ms,
-                        curve: Curves.easeOutCubic,
-                      );
+              return RefreshIndicator(
+                onRefresh: () async {
+                  await ref.read(timelineProvider.notifier).loadEvents();
+                  await ref.read(reminderProvider.notifier).loadReminders();
                 },
+                child: ListView.builder(
+                  padding: EdgeInsets.only(
+                    left: 12,
+                    right: 12,
+                    top: 24,
+                    bottom: MediaQuery.of(context).padding.bottom + 120,
+                  ),
+                  itemCount: events.length,
+                  cacheExtent: 1000,
+                  itemBuilder: (context, index) {
+                    final event = events[index];
+                    final daysSince = event.date
+                        .difference(me.relationshipStartDate ?? DateTime.now())
+                        .inDays;
+                    final isEventLeft = index % 2 == 0;
+
+                    return _TimelineItem(
+                          event: event,
+                          dayCount: daysSince >= 0 ? daysSince + 1 : null,
+                          isLeft: isEventLeft,
+                          isFirst: index == 0,
+                          isLast: index == events.length - 1,
+                          color: Theme.of(context).primaryColor,
+                          onDelete: event.isSystemEvent
+                              ? null
+                              : () => _confirmDelete(event),
+                          onEdit: event.isSystemEvent
+                              ? null
+                              : () {
+                                  if (event.id.startsWith('reminder_')) {
+                                    _showReminderEditor(
+                                      event.id.replaceFirst('reminder_', ''),
+                                    );
+                                  } else {
+                                    _showEventEditor(eventToEdit: event);
+                                  }
+                                },
+                        )
+                        .animate()
+                        .fadeIn(delay: (50 * index).clamp(0, 400).ms)
+                        .slideY(
+                          begin: 0.1,
+                          end: 0,
+                          duration: 400.ms,
+                          curve: Curves.easeOutCubic,
+                        );
+                  },
+                ),
               );
             },
           ),
@@ -622,10 +595,8 @@ class _TimelineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Optimization: Stack based layout instead of IntrinsicHeight + Row Expand
     return Stack(
       children: [
-        // The Vertical Line
         Positioned(
           top: 0,
           bottom: 0,
@@ -668,7 +639,6 @@ class _TimelineItem extends StatelessWidget {
             ),
           ),
         ),
-        // The Content
         Padding(
           padding: const EdgeInsets.only(bottom: 24),
           child: Row(
@@ -798,43 +768,9 @@ class _ContentCard extends StatelessWidget {
                   color: AppColors.textSub,
                   height: 1.4,
                 ),
-                maxLines: 10,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            if (onEdit != null || onDelete != null) ...[
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (onEdit != null)
-                    _buildIcon(Icons.edit_rounded, Colors.blue, onEdit!),
-                  if (onDelete != null) ...[
-                    const SizedBox(width: 12),
-                    _buildIcon(Icons.delete_rounded, Colors.red, onDelete!),
-                  ],
-                ],
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIcon(IconData icon, Color color, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 18, color: color),
         ),
       ),
     );

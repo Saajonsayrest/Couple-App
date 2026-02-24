@@ -8,13 +8,21 @@ import '../core/constants.dart';
 import '../data/models/user_profile.dart';
 import '../services/notification_service.dart';
 
+import '../services/partner_service.dart';
+import '../services/upload_service.dart';
+
 final profileProvider =
     StateNotifierProvider<ProfileNotifier, List<UserProfile>>((ref) {
-      return ProfileNotifier();
+      final partnerService = ref.watch(partnerServiceProvider);
+      final uploadService = ref.watch(uploadServiceProvider);
+      return ProfileNotifier(partnerService, uploadService);
     });
 
 class ProfileNotifier extends StateNotifier<List<UserProfile>> {
-  ProfileNotifier() : super([]) {
+  final PartnerService _partnerService;
+  final UploadService _uploadService;
+
+  ProfileNotifier(this._partnerService, this._uploadService) : super([]) {
     _loadProfiles();
   }
 
@@ -29,12 +37,96 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
         }
       }
     }
+    // Try to sync from API in background if possible
+    syncFromApi();
+  }
+
+  Future<void> syncFromApi() async {
+    try {
+      final partnersData = await _partnerService.getPartners();
+      if (partnersData.isNotEmpty) {
+        final List<UserProfile> profiles = [];
+        for (var data in partnersData) {
+          profiles.add(
+            UserProfile(
+              name: data['full_name'],
+              nickname: data['nickname'],
+              gender: data['gender'],
+              birthday: DateTime.parse(data['date_of_birth']),
+              avatarPath: data['profile_image'],
+              relationshipStartDate: data['first_met_on'] != null
+                  ? DateTime.parse(data['first_met_on'])
+                  : null,
+              isPartner: data['is_partner'],
+              serverId: data['id'],
+            ),
+          );
+        }
+
+        // Sort so "me" is first and "partner" is second
+        profiles.sort((a, b) => a.isPartner ? 1 : -1);
+
+        final box = Hive.box<UserProfile>(AppConstants.userBox);
+        await box.clear();
+        for (var i = 0; i < profiles.length; i++) {
+          await box.put(i, profiles[i]);
+        }
+        state = profiles;
+        if (profiles.length >= 2) {
+          await _updateHomeWidget(profiles[0], profiles[1]);
+        }
+      }
+    } catch (e) {
+      print('Failed to sync partners from API: $e');
+    }
   }
 
   Future<void> updateProfiles({
     required UserProfile me,
     required UserProfile partner,
   }) async {
+    // 1. Upload images if they are local paths
+    if (me.avatarPath != null &&
+        !me.avatarPath!.startsWith('http') &&
+        File(me.avatarPath!).existsSync()) {
+      try {
+        me.avatarPath = await _uploadService.uploadImage(File(me.avatarPath!));
+      } catch (e) {
+        print('Failed to upload my avatar: $e');
+      }
+    }
+    if (partner.avatarPath != null &&
+        !partner.avatarPath!.startsWith('http') &&
+        File(partner.avatarPath!).existsSync()) {
+      try {
+        partner.avatarPath = await _uploadService.uploadImage(
+          File(partner.avatarPath!),
+        );
+      } catch (e) {
+        print('Failed to upload partner avatar: $e');
+      }
+    }
+
+    // 2. Save to API
+    try {
+      if (me.serverId != null) {
+        await _partnerService.updatePartner(me.serverId!, me);
+      } else {
+        final newMe = await _partnerService.createPartner(me);
+        me.serverId = newMe['id'];
+      }
+
+      if (partner.serverId != null) {
+        await _partnerService.updatePartner(partner.serverId!, partner);
+      } else {
+        final newPartner = await _partnerService.createPartner(partner);
+        partner.serverId = newPartner['id'];
+      }
+    } catch (e) {
+      print('Failed to sync profiles to API: $e');
+      // We still update Hive so app works offline
+    }
+
     final box = Hive.box<UserProfile>(AppConstants.userBox);
 
     // Save to Hive
