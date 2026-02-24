@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
+import '../../services/image_service.dart';
 import '../../providers/profile_provider.dart';
 import '../../core/globals.dart';
 
@@ -28,8 +28,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   DateTime? _relationshipStart;
   String? _myAvatarPath;
   String? _partnerAvatarPath;
-
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -57,18 +55,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _pickImage(bool isPartner) async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 600,
-      maxHeight: 600,
-      imageQuality: 70,
+    final color = Theme.of(context).primaryColor;
+    final String? localPath = await ImageService.pickAndCropImage(
+      context: context,
+      color: color,
     );
-    if (image != null) {
+
+    if (localPath != null) {
       setState(() {
         if (isPartner) {
-          _partnerAvatarPath = image.path;
+          _partnerAvatarPath = localPath;
         } else {
-          _myAvatarPath = image.path;
+          _myAvatarPath = localPath;
         }
       });
     }

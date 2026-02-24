@@ -5,9 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
+import '../../services/image_service.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../core/app_theme.dart';
@@ -38,8 +36,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   DateTime? _relationshipStart;
 
-  final ImagePicker _picker = ImagePicker();
-
   @override
   void dispose() {
     _pageController.dispose();
@@ -63,18 +59,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _pickImage(bool isMe) async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 600,
-      maxHeight: 600,
-      imageQuality: 70,
-    );
-    if (image != null) {
-      final directory = await getApplicationDocumentsDirectory();
-      final String fileName = p.basename(image.path);
-      final String localPath = p.join(directory.path, fileName);
-      await File(image.path).copy(localPath);
+    final themeId = ref.read(themeProvider);
+    final color = isMe
+        ? (themeId == 'sky_dreams'
+              ? AppColors.malePrimary
+              : AppColors.femalePrimary)
+        : (themeId == 'sky_dreams'
+              ? AppColors.femalePrimary
+              : AppColors.malePrimary);
 
+    final String? localPath = await ImageService.pickAndCropImage(
+      context: context,
+      color: color,
+    );
+
+    if (localPath != null) {
       setState(() {
         if (isMe) {
           _myAvatarPath = localPath;

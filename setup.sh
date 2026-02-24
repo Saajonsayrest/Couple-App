@@ -45,10 +45,11 @@ case "$1" in
     ios-release)     
         ID=$(detect_ios)
         if [ -z "$ID" ]; then
-            echo "❌ ERROR: No physical iPhone detected. Connect via USB or ensure Wireless debugging is active."
-            exit 1
+            echo "⚠️  WARNING: No physical iPhone detected by script. Trying to let Flutter detect..."
+            ios_setup && flutter run --release
+        else
+            ios_setup && flutter run --release -d "$ID" 
         fi
-        ios_setup && flutter run --release -d "$ID" 
         ;;
     android-release) clean_get && flutter run --release -d android ;;
     apk)             clean_get && flutter build apk --release ;;
