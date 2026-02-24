@@ -9,6 +9,8 @@ import '../../core/app_theme.dart';
 import '../../core/constants.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/timeline_event.dart';
+import '../../data/models/reminder.dart';
+import '../../services/notification_service.dart';
 import '../../providers/profile_provider.dart';
 
 class TimelineScreen extends ConsumerStatefulWidget {
@@ -111,6 +113,23 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
         );
       }
     }
+
+    // 3. User Reminders
+    final remindersBox = Hive.box(AppConstants.remindersBox);
+    final reminders = remindersBox.values
+        .map((e) => Reminder.fromMap(Map<dynamic, dynamic>.from(e)))
+        .where((r) => !r.isCompleted)
+        .map(
+          (r) => TimelineEvent(
+            id: 'reminder_${r.id}',
+            date: r.dateTime,
+            title: r.title,
+            body: 'Scheduled Reminder 🔔',
+            isSystemEvent: false,
+          ),
+        )
+        .toList();
+    events.addAll(reminders);
 
     // Sort, Unique, Sort
     final Map<String, TimelineEvent> uniqueEvents = {};
@@ -268,6 +287,23 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
   }
 
   void _deleteEvent(String id) async {
+    if (id.startsWith('reminder_')) {
+      final actualId = id.replaceFirst('reminder_', '');
+      final box = Hive.box(AppConstants.remindersBox);
+      final keyToDelete = box.keys.firstWhere(
+        (k) =>
+            Reminder.fromMap(Map<dynamic, dynamic>.from(box.get(k))).id ==
+            actualId,
+        orElse: () => null,
+      );
+      if (keyToDelete != null) {
+        await box.delete(keyToDelete);
+        await NotificationService().cancelReminder(actualId);
+        setState(() {});
+      }
+      return;
+    }
+
     final keyToDelete = _timelineBox.keys.firstWhere(
       (k) =>
           TimelineEvent.fromMap(
@@ -280,6 +316,127 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
       await _timelineBox.delete(keyToDelete);
       setState(() {});
     }
+  }
+
+  void _showReminderEditor(String reminderId) {
+    final box = Hive.box(AppConstants.remindersBox);
+    final reminder = box.values
+        .map((e) => Reminder.fromMap(Map<dynamic, dynamic>.from(e)))
+        .firstWhere((r) => r.id == reminderId);
+
+    final titleController = TextEditingController(text: reminder.title);
+    DateTime selectedDate = reminder.dateTime;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Edit Reminder 🔔',
+                  style: GoogleFonts.varelaRound(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textMain,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'What to remind?',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Time: ${DateFormat('MMM dd, hh:mm a').format(selectedDate)}',
+                  ),
+                  trailing: const Icon(Icons.access_time_rounded),
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now().subtract(
+                        const Duration(days: 30),
+                      ),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (date != null) {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(selectedDate),
+                      );
+                      if (time != null) {
+                        setModalState(() {
+                          selectedDate = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          );
+                        });
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (titleController.text.isNotEmpty) {
+                      reminder.title = titleController.text;
+                      reminder.dateTime = selectedDate;
+
+                      final key = box.keys.firstWhere(
+                        (k) =>
+                            Reminder.fromMap(
+                              Map<dynamic, dynamic>.from(box.get(k)),
+                            ).id ==
+                            reminder.id,
+                      );
+                      await box.put(key, reminder.toMap());
+                      await NotificationService().scheduleReminder(reminder);
+
+                      if (context.mounted) Navigator.pop(context);
+                      setState(() {});
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: const Text('Update Reminder'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _confirmDelete(String id) {
@@ -373,7 +530,15 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                             : () => _confirmDelete(event.id),
                         onEdit: event.isSystemEvent
                             ? null
-                            : () => _showEventEditor(eventToEdit: event),
+                            : () {
+                                if (event.id.startsWith('reminder_')) {
+                                  _showReminderEditor(
+                                    event.id.replaceFirst('reminder_', ''),
+                                  );
+                                } else {
+                                  _showEventEditor(eventToEdit: event);
+                                }
+                              },
                       )
                       .animate()
                       .fadeIn(delay: (50 * index).clamp(0, 400).ms)

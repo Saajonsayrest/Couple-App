@@ -438,10 +438,14 @@ class HomeScreen extends ConsumerWidget {
           builder: (context, Box box, _) {
             final reminders = box.values
                 .map((e) => Reminder.fromMap(Map<dynamic, dynamic>.from(e)))
-                .where((r) => !r.isCompleted)
                 .toList();
 
-            reminders.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+            reminders.sort((a, b) {
+              if (a.isCompleted != b.isCompleted) {
+                return a.isCompleted ? -1 : 1; // Completed ones first
+              }
+              return a.dateTime.compareTo(b.dateTime);
+            });
 
             if (reminders.isEmpty) {
               return Container(
@@ -484,7 +488,6 @@ class HomeScreen extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -494,56 +497,17 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
         border: Border.all(
-          color: isOverdue
-              ? Colors.red.withOpacity(0.1)
+          color: (reminder.isCompleted || isOverdue)
+              ? Colors.green.withOpacity(0.15)
               : color.withOpacity(0.1),
         ),
+        color: (reminder.isCompleted || isOverdue)
+            ? Colors.green.withOpacity(0.02)
+            : Colors.white,
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () async {
-              reminder.isCompleted = true;
-              final box = Hive.box(AppConstants.remindersBox);
-              final key = box.keys.firstWhere(
-                (k) =>
-                    Reminder.fromMap(
-                      Map<dynamic, dynamic>.from(box.get(k)),
-                    ).id ==
-                    reminder.id,
-              );
-              await box.delete(key);
-              await NotificationService().cancelReminder(reminder.id);
-
-              scaffoldMessengerKey.currentState?.clearSnackBars();
-              scaffoldMessengerKey.currentState?.showSnackBar(
-                const SnackBar(
-                  content: Text('Reminder Completed! ✨'),
-                  duration: Duration(milliseconds: 1500),
-                ),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(right: 16, left: 4),
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                shape: BoxShape.circle,
-                border: Border.all(color: color.withOpacity(0.35), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.08),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Icon(Icons.check_rounded, size: 18, color: color),
-              ),
-            ),
-          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,34 +517,178 @@ class HomeScreen extends ConsumerWidget {
                   style: GoogleFonts.quicksand(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: AppColors.textMain,
+                    color: (reminder.isCompleted || isOverdue)
+                        ? AppColors.textSub.withOpacity(0.5)
+                        : AppColors.textMain,
+                    decoration: (reminder.isCompleted || isOverdue)
+                        ? TextDecoration.lineThrough
+                        : null,
+                    decorationColor: (reminder.isCompleted || isOverdue)
+                        ? AppColors.textSub.withOpacity(0.3)
+                        : null,
                   ),
                 ),
                 Text(
                   DateFormat('MMM dd, hh:mm a').format(reminder.dateTime),
                   style: GoogleFonts.quicksand(
                     fontSize: 12,
-                    color: isOverdue ? Colors.redAccent : AppColors.textSub,
-                    fontWeight: isOverdue ? FontWeight.bold : FontWeight.w600,
+                    color: (reminder.isCompleted || isOverdue)
+                        ? AppColors.textSub.withOpacity(0.3)
+                        : AppColors.textSub,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (reminder.isCompleted || isOverdue)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Done ✨',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.withOpacity(0.8),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
-          if (reminder.isNotificationEnabled)
-            Icon(
-              Icons.notifications_active_outlined,
-              size: 16,
-              color: color.withOpacity(0.4),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (reminder.isNotificationEnabled) ...[
+                Icon(
+                  Icons.notifications_active_outlined,
+                  size: 16,
+                  color: color.withOpacity(0.35),
+                ),
+                const SizedBox(width: 12),
+              ],
+              _buildActionButton(
+                icon: (reminder.isCompleted || isOverdue)
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: (reminder.isCompleted || isOverdue)
+                    ? Colors.green.withOpacity(0.7)
+                    : color.withOpacity(0.6),
+                onTap: () async {
+                  reminder.isCompleted = !reminder.isCompleted;
+                  final box = Hive.box(AppConstants.remindersBox);
+                  final key = box.keys.firstWhere(
+                    (k) =>
+                        Reminder.fromMap(
+                          Map<dynamic, dynamic>.from(box.get(k)),
+                        ).id ==
+                        reminder.id,
+                  );
+                  await box.put(key, reminder.toMap());
+
+                  if (reminder.isCompleted) {
+                    await NotificationService().cancelReminder(reminder.id);
+                  } else {
+                    // Only re-schedule if it's in the future
+                    if (reminder.dateTime.isAfter(DateTime.now())) {
+                      await NotificationService().scheduleReminder(reminder);
+                    }
+                  }
+                },
+              ),
+              const SizedBox(width: 4),
+              _buildActionButton(
+                icon: Icons.edit_note_rounded,
+                color: color.withOpacity(0.6),
+                onTap: () =>
+                    _showAddReminderDialog(context, reminderToEdit: reminder),
+              ),
+              const SizedBox(width: 4),
+              _buildActionButton(
+                icon: Icons.delete_outline_rounded,
+                color: Colors.red.withOpacity(0.55),
+                onTap: () => _confirmDeleteReminder(context, reminder),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  void _showAddReminderDialog(BuildContext context) {
-    final titleController = TextEditingController();
-    DateTime selectedDate = DateTime.now().add(const Duration(hours: 1));
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(icon, size: 20, color: color),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteReminder(BuildContext context, Reminder reminder) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Remove Reminder?',
+          style: GoogleFonts.quicksand(fontWeight: FontWeight.bold),
+        ),
+        content: Text('Are you sure you want to delete "${reminder.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textSub)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final box = Hive.box(AppConstants.remindersBox);
+              final key = box.keys.firstWhere(
+                (k) =>
+                    Reminder.fromMap(
+                      Map<dynamic, dynamic>.from(box.get(k)),
+                    ).id ==
+                    reminder.id,
+                orElse: () => null,
+              );
+              if (key != null) {
+                await box.delete(key);
+                await NotificationService().cancelReminder(reminder.id);
+                scaffoldMessengerKey.currentState?.showSnackBar(
+                  const SnackBar(content: Text('Reminder Deleted')),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddReminderDialog(
+    BuildContext context, {
+    Reminder? reminderToEdit,
+  }) {
+    final titleController = TextEditingController(text: reminderToEdit?.title);
+    DateTime selectedDate =
+        reminderToEdit?.dateTime ??
+        DateTime.now().add(const Duration(hours: 1));
 
     showModalBottomSheet(
       context: context,
@@ -602,7 +710,9 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Set a Reminder 🔔',
+                  reminderToEdit == null
+                      ? 'Set a Reminder 🔔'
+                      : 'Edit Reminder 📝',
                   style: GoogleFonts.varelaRound(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -657,23 +767,46 @@ class HomeScreen extends ConsumerWidget {
                 ElevatedButton(
                   onPressed: () async {
                     if (titleController.text.isNotEmpty) {
-                      final reminder = Reminder(
-                        id: const Uuid().v4(),
-                        title: titleController.text,
-                        dateTime: selectedDate,
-                      );
-
                       final box = Hive.box(AppConstants.remindersBox);
-                      await box.add(reminder.toMap());
 
-                      await NotificationService().scheduleReminder(reminder);
+                      if (reminderToEdit == null) {
+                        final reminder = Reminder(
+                          id: const Uuid().v4(),
+                          title: titleController.text,
+                          dateTime: selectedDate,
+                        );
+                        await box.add(reminder.toMap());
+                        await NotificationService().scheduleReminder(reminder);
 
-                      scaffoldMessengerKey.currentState?.showSnackBar(
-                        const SnackBar(
-                          content: Text('Reminder Scheduled! 🔔'),
-                          duration: Duration(milliseconds: 1500),
-                        ),
-                      );
+                        scaffoldMessengerKey.currentState?.showSnackBar(
+                          const SnackBar(
+                            content: Text('Reminder Scheduled! 🔔'),
+                            duration: Duration(milliseconds: 1500),
+                          ),
+                        );
+                      } else {
+                        reminderToEdit.title = titleController.text;
+                        reminderToEdit.dateTime = selectedDate;
+
+                        final key = box.keys.firstWhere(
+                          (k) =>
+                              Reminder.fromMap(
+                                Map<dynamic, dynamic>.from(box.get(k)),
+                              ).id ==
+                              reminderToEdit.id,
+                        );
+                        await box.put(key, reminderToEdit.toMap());
+                        await NotificationService().scheduleReminder(
+                          reminderToEdit,
+                        );
+
+                        scaffoldMessengerKey.currentState?.showSnackBar(
+                          const SnackBar(
+                            content: Text('Reminder Updated! ✨'),
+                            duration: Duration(milliseconds: 1500),
+                          ),
+                        );
+                      }
 
                       if (context.mounted) Navigator.pop(context);
                     }
@@ -686,7 +819,11 @@ class HomeScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: const Text('Save Reminder'),
+                  child: Text(
+                    reminderToEdit == null
+                        ? 'Save Reminder'
+                        : 'Update Reminder',
+                  ),
                 ),
               ],
             ),
