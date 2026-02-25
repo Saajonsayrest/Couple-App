@@ -1,8 +1,10 @@
+import 'dart:math';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import '../data/models/reminder.dart';
+import '../data/game_data.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -52,6 +54,84 @@ class NotificationService {
     );
 
     await _notificationsPlugin.initialize(initSettings);
+
+    // Create Love Quotes channel for Android
+    final androidPlugin = _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'daily_quotes_channel',
+        'Daily Love Quotes',
+        description: 'Morning love quotes for your partner',
+        importance: Importance.low, // Silent by default
+        playSound: false,
+        enableVibration: false,
+        showBadge: false,
+      ),
+    );
+
+    // Automatically schedule quotes on init
+    await scheduleDailyQuoteNotification();
+  }
+
+  Future<void> scheduleDailyQuoteNotification() async {
+    final now = tz.TZDateTime.now(tz.local);
+    final random = Random();
+    final quotes = GameData.coupleQuotes;
+
+    for (int i = 0; i < 7; i++) {
+      tz.TZDateTime scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        6, // 6 AM
+        0,
+        0,
+      ).add(Duration(days: i));
+
+      // If scheduled time has already passed today, don't schedule for today
+      if (scheduledDate.isBefore(now)) {
+        continue;
+      }
+
+      // Use a consistent ID range for daily quotes (e.g., 9000-9006)
+      final id = 9000 + i;
+
+      // Select a truly random quote
+      final quote = quotes[random.nextInt(quotes.length)];
+
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        'Good Morning! ❤️',
+        quote,
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'daily_quotes_channel',
+            'Daily Love Quotes',
+            channelDescription: 'Morning love quotes for your partner',
+            importance: Importance.low,
+            priority: Priority.low,
+            playSound: false,
+            enableVibration: false,
+            styleInformation: BigTextStyleInformation(''),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: false,
+            presentSound: false, // Silent
+            interruptionLevel: InterruptionLevel.passive, // Less intrusive
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
   }
 
   Future<void> requestPermissions() async {
