@@ -24,12 +24,33 @@ void main() async {
   await Hive.initFlutter();
 
   // Open Boxes
-  await Hive.openBox(AppConstants.settingsBox);
+  try {
+    await Hive.openBox(AppConstants.settingsBox);
+    Hive.registerAdapter(UserProfileAdapter());
+    await Hive.openBox<UserProfile>(AppConstants.userBox);
+    await Hive.openBox(AppConstants.timelineBox);
+    await Hive.openBox(AppConstants.remindersBox);
+  } catch (e) {
+    debugPrint('📦 Hive initialization error, attempting recovery: $e');
+    try {
+      // Clear corrupted boxes from disk
+      await Hive.deleteBoxFromDisk(AppConstants.timelineBox);
+      await Hive.deleteBoxFromDisk(AppConstants.remindersBox);
+      await Hive.deleteBoxFromDisk(AppConstants.userBox);
+      await Hive.deleteBoxFromDisk(AppConstants.settingsBox);
 
-  Hive.registerAdapter(UserProfileAdapter());
-  await Hive.openBox<UserProfile>(AppConstants.userBox);
-  await Hive.openBox(AppConstants.timelineBox);
-  await Hive.openBox(AppConstants.remindersBox);
+      // Re-initialize and Re-open
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(UserProfileAdapter());
+      }
+      await Hive.openBox(AppConstants.settingsBox);
+      await Hive.openBox<UserProfile>(AppConstants.userBox);
+      await Hive.openBox(AppConstants.timelineBox);
+      await Hive.openBox(AppConstants.remindersBox);
+    } catch (recoveryError) {
+      debugPrint('❌ Hive recovery failed: $recoveryError');
+    }
+  }
 
   // Initialize Notifications
   final notificationService = NotificationService();
