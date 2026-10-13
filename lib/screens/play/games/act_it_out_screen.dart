@@ -34,54 +34,63 @@ class _ActItOutScreenState extends State<ActItOutScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Spacer(),
-            GestureDetector(
-              onTap: () => setState(() => _revealed = true),
-              child: Container(
-                height: 300,
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: _revealed
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: _revealed
-                      ? Text(
-                          _prompt,
-                          style: GoogleFonts.caveat(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+            // Fixed-height card scrolls if the screen is too short
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  clipBehavior: Clip.none,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _revealed = true),
+                    child: Container(
+                      height: 300,
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: _revealed
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
-                          textAlign: TextAlign.center,
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('🎭', style: const TextStyle(fontSize: 60)),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Tap to Reveal',
-                              style: GoogleFonts.varelaRound(
-                                fontSize: 20,
-                                color: Colors.grey.shade700,
+                        ],
+                      ),
+                      child: Center(
+                        child: _revealed
+                            ? Text(
+                                _prompt,
+                                style: GoogleFonts.caveat(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '🎭',
+                                    style: const TextStyle(fontSize: 60),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Tap to Reveal',
+                                    style: GoogleFonts.varelaRound(
+                                      fontSize: 20,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-            const Spacer(),
             Text(
               'One person acts, the other guesses! 🎬',
               style: GoogleFonts.varelaRound(

@@ -57,16 +57,19 @@ class _FinishSentenceScreenState extends State<FinishSentenceScreen> {
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Spacer(),
-                  Text(
-                    'Finish the Sentence',
-                    style: GoogleFonts.varelaRound(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMain,
+                  Expanded(
+                    child: Text(
+                      'Finish the Sentence',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.varelaRound(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMain,
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   const SizedBox(width: 48), // Balance
                 ],
               ),
@@ -75,158 +78,166 @@ class _FinishSentenceScreenState extends State<FinishSentenceScreen> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Instructions
-                    Text(
-                      'Take turns completing this...',
-                      style: GoogleFonts.varelaRound(
-                        fontSize: 16,
-                        color: AppColors.textSub,
-                      ),
-                    ).animate().fadeIn().slideY(begin: 0.2, end: 0),
-
-                    const SizedBox(height: 32),
-
-                    // Sentence Card
-                    Container(
-                          key: ValueKey(
-                            _sentence,
-                          ), // Re-animate when sentence changes
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 60,
+                child: Center(
+                  child: SingleChildScrollView(
+                    // Keep the decorative heart (positioned above the card) visible.
+                    clipBehavior: Clip.none,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Instructions
+                        Text(
+                          'Take turns completing this...',
+                          style: GoogleFonts.varelaRound(
+                            fontSize: 16,
+                            color: AppColors.textSub,
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(32),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(
-                                  context,
-                                ).primaryColor.withOpacity(0.1),
-                                blurRadius: 30,
-                                offset: const Offset(0, 15),
+                        ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+
+                        const SizedBox(height: 32),
+
+                        // Sentence Card
+                        Container(
+                              key: ValueKey(
+                                _sentence,
+                              ), // Re-animate when sentence changes
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 60,
                               ),
-                            ],
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.1),
-                              width: 1,
-                            ),
-                          ),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              // Decorative Heart
-                              Positioned(
-                                top: -85,
-                                left: 0,
-                                right: 0,
-                                child: Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(32),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.1),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 15),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.1),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  // Decorative Heart
+                                  Positioned(
+                                    top: -85,
+                                    left: 0,
+                                    right: 0,
+                                    child: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Theme.of(
+                                                context,
+                                              ).primaryColor.withOpacity(0.2),
+                                              blurRadius: 15,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          '✍️',
+                                          style: const TextStyle(fontSize: 32),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        _sentence,
+                                        style: GoogleFonts.caveat(
+                                          fontSize: 34,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).primaryColor,
+                                          height: 1.2,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Container(
+                                        width: 40,
+                                        height: 4,
+                                        decoration: BoxDecoration(
                                           color: Theme.of(
                                             context,
                                           ).primaryColor.withOpacity(0.2),
-                                          blurRadius: 15,
+                                          borderRadius: BorderRadius.circular(
+                                            2,
+                                          ),
                                         ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      '✍️',
-                                      style: const TextStyle(fontSize: 32),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _sentence,
-                                    style: GoogleFonts.caveat(
-                                      fontSize: 34,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
-                                      height: 1.2,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Container(
-                                    width: 40,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(
-                                        context,
-                                      ).primaryColor.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Text(
-                                    '"Say the ending out loud to your partner"',
-                                    style: GoogleFonts.varelaRound(
-                                      fontSize: 14,
-                                      color: Colors.grey.withOpacity(0.5),
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                    textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Text(
+                                        '"Say the ending out loud to your partner"',
+                                        style: GoogleFonts.varelaRound(
+                                          fontSize: 14,
+                                          color: Colors.grey.withOpacity(0.5),
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        )
-                        .animate(key: ValueKey(_sentence))
-                        .fadeIn(duration: 600.ms)
-                        .scale(
-                          begin: const Offset(0.9, 0.9),
-                          curve: Curves.elasticOut,
-                        ),
+                            )
+                            .animate(key: ValueKey(_sentence))
+                            .fadeIn(duration: 600.ms)
+                            .scale(
+                              begin: const Offset(0.9, 0.9),
+                              curve: Curves.elasticOut,
+                            ),
 
-                    const SizedBox(height: 48),
+                        const SizedBox(height: 48),
 
-                    // Floating icons decoration
-                    Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.favorite,
-                              color: Colors.pink.withOpacity(0.2),
-                              size: 16,
+                        // Floating icons decoration
+                        Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.favorite,
+                                  color: Colors.pink.withOpacity(0.2),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.auto_awesome,
+                                  color: Colors.amber.withOpacity(0.2),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.favorite,
+                                  color: Colors.pink.withOpacity(0.2),
+                                  size: 16,
+                                ),
+                              ],
+                            )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .scale(
+                              begin: const Offset(1, 1),
+                              end: const Offset(1.2, 1.2),
+                              duration: 2.seconds,
                             ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.auto_awesome,
-                              color: Colors.amber.withOpacity(0.2),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.favorite,
-                              color: Colors.pink.withOpacity(0.2),
-                              size: 16,
-                            ),
-                          ],
-                        )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .scale(
-                          begin: const Offset(1, 1),
-                          end: const Offset(1.2, 1.2),
-                          duration: 2.seconds,
-                        ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -252,11 +263,16 @@ class _FinishSentenceScreenState extends State<FinishSentenceScreen> {
                     children: [
                       const Icon(Icons.refresh_rounded),
                       const SizedBox(width: 12),
-                      Text(
-                        'NEXT STARTER',
-                        style: GoogleFonts.varelaRound(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'NEXT STARTER',
+                            style: GoogleFonts.varelaRound(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],

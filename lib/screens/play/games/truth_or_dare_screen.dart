@@ -105,82 +105,89 @@ class _TruthOrDareScreenState extends State<TruthOrDareScreen> {
                 ],
               ),
             ),
-            const Spacer(),
-            // The Card
-            GestureDetector(
-              onTap: () {
-                if (_isFlipped) setState(() => _isFlipped = false);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeInOutBack,
-                height: 400,
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: _isFlipped ? _getLevelColor() : Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                  border: Border.all(
-                    color: _isFlipped ? Colors.white : Colors.grey.shade200,
-                    width: 4,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (!_isFlipped) ...[
-                      Icon(
-                        Icons.help_outline_rounded,
-                        size: 80,
-                        color: Colors.grey.shade300,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Pick Truth or Dare!",
-                        style: GoogleFonts.varelaRound(
-                          fontSize: 24,
-                          color: Colors.grey.shade400,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ] else ...[
-                      Text(
-                        _type,
-                        style: GoogleFonts.blackOpsOne(
-                          fontSize: 32,
-                          color: Colors.white,
-                          letterSpacing: 2,
+            // The Card (up to 400dp tall, shrinks on small screens)
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 424),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_isFlipped) setState(() => _isFlipped = false);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeInOutBack,
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: _isFlipped ? _getLevelColor() : Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: _isFlipped
+                              ? Colors.white
+                              : Colors.grey.shade200,
+                          width: 4,
                         ),
                       ),
-                      const SizedBox(height: 32),
-                      Expanded(
-                        child: Center(
-                          child: SingleChildScrollView(
-                            child: Text(
-                              _currentQuestion,
-                              style: GoogleFonts.caveat(
-                                fontSize: 28,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (!_isFlipped) ...[
+                            Icon(
+                              Icons.help_outline_rounded,
+                              size: 80,
+                              color: Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Pick Truth or Dare!",
+                              style: GoogleFonts.varelaRound(
+                                fontSize: 24,
+                                color: Colors.grey.shade400,
                               ),
                               textAlign: TextAlign.center,
-                            ).animate().fadeIn(delay: 300.ms),
-                          ),
-                        ),
+                            ),
+                          ] else ...[
+                            Text(
+                              _type,
+                              style: GoogleFonts.blackOpsOne(
+                                fontSize: 32,
+                                color: Colors.white,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            Expanded(
+                              child: Center(
+                                child: SingleChildScrollView(
+                                  child: Text(
+                                    _currentQuestion,
+                                    style: GoogleFonts.caveat(
+                                      fontSize: 28,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ).animate().fadeIn(delay: 300.ms),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
               ),
             ),
-            const Spacer(),
             Row(
               children: [
                 Expanded(
@@ -240,13 +247,16 @@ class _LevelButton extends StatelessWidget {
             color: isSelected ? color : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey.shade700,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
         ),

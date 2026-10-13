@@ -57,6 +57,22 @@ void main() async {
   await notificationService.init();
   await notificationService.requestPermissions();
 
+  // Re-arm birthdays, anniversary and New Year on every launch so they are
+  // never missed (e.g. permission granted after onboarding, or an old build
+  // that never scheduled them).
+  final userBox = Hive.isBoxOpen(AppConstants.userBox)
+      ? Hive.box<UserProfile>(AppConstants.userBox)
+      : null;
+  final me = userBox?.get(0);
+  final partner = userBox?.get(1);
+  if (me != null && partner != null) {
+    try {
+      await notificationService.scheduleImportantDates(me, partner);
+    } catch (e) {
+      debugPrint('Failed to schedule important dates: $e');
+    }
+  }
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

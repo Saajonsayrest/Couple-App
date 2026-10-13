@@ -79,6 +79,9 @@ class CoupleCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             '$name1 & $name2',
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.quicksand(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -91,14 +94,17 @@ class CoupleCard extends StatelessWidget {
           // Short & Sweet Counter
           Column(
             children: [
-              Text(
-                '$days',
-                style: GoogleFonts.quicksand(
-                  fontSize: 56,
-                  fontWeight: FontWeight.w800,
-                  color: theme.primaryColor,
-                  height: 1,
-                  letterSpacing: -2,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '$days',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w800,
+                    color: theme.primaryColor,
+                    height: 1,
+                    letterSpacing: -2,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),

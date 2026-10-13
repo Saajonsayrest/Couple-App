@@ -3,6 +3,17 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.all {
+        resolutionStrategy {
+            force("androidx.glance:glance:1.1.1")
+            force("androidx.glance:glance-appwidget:1.1.1")
+            force("androidx.glance:glance-appwidget-proto:1.1.1")
+            force("androidx.glance:glance-material:1.1.1")
+            force("androidx.glance:glance-material3:1.1.1")
+            force("androidx.work:work-runtime:2.9.1")
+            force("androidx.work:work-runtime-ktx:2.9.1")
+        }
+    }
 }
 
 val newBuildDir: Directory =

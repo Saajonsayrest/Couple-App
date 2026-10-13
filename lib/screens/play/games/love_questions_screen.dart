@@ -51,48 +51,55 @@ class _LoveQuestionsScreenState extends State<LoveQuestionsScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Spacer(),
-              // Question Card
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).primaryColor.withOpacity(0.2),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.favorite_rounded,
-                      size: 60,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    const SizedBox(height: 24),
-                    if (_showQuestion)
-                      Text(
-                        _currentQuestion,
-                        style: GoogleFonts.caveat(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        textAlign: TextAlign.center,
-                      ).animate().fadeIn(duration: 600.ms).scale(),
-                    if (!_showQuestion)
-                      const SizedBox(
-                        height: 100,
-                        child: Center(child: CircularProgressIndicator()),
+              // Question Card (scrolls if the question is long / text is large)
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    clipBehavior: Clip.none,
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withOpacity(0.2),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                  ],
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.favorite_rounded,
+                            size: 60,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          const SizedBox(height: 24),
+                          if (_showQuestion)
+                            Text(
+                              _currentQuestion,
+                              style: GoogleFonts.caveat(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              textAlign: TextAlign.center,
+                            ).animate().fadeIn(duration: 600.ms).scale(),
+                          if (!_showQuestion)
+                            const SizedBox(
+                              height: 100,
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const Spacer(),
               // Hint Text
               Text(
                 'Take turns answering honestly 💕',

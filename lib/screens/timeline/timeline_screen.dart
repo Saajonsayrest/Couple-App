@@ -342,96 +342,98 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Edit Reminder 🔔',
-                  style: GoogleFonts.varelaRound(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMain,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'What to remind?',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Edit Reminder 🔔',
+                    style: GoogleFonts.varelaRound(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMain,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    'Time: ${DateFormat('MMM dd, hh:mm a').format(selectedDate)}',
-                  ),
-                  trailing: const Icon(Icons.access_time_rounded),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate,
-                      firstDate: DateTime.now().subtract(
-                        const Duration(days: 30),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'What to remind?',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (date != null) {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(selectedDate),
-                      );
-                      if (time != null) {
-                        setModalState(() {
-                          selectedDate = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time.hour,
-                            time.minute,
-                          );
-                        });
-                      }
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (titleController.text.isNotEmpty) {
-                      reminder.title = titleController.text;
-                      reminder.dateTime = selectedDate;
-
-                      final key = box.keys.firstWhere(
-                        (k) =>
-                            Reminder.fromMap(
-                              Map<dynamic, dynamic>.from(box.get(k)),
-                            ).id ==
-                            reminder.id,
-                      );
-                      await box.put(key, reminder.toMap());
-                      await NotificationService().scheduleReminder(reminder);
-
-                      if (context.mounted) Navigator.pop(context);
-                      setState(() {});
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: const Text('Update Reminder'),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      'Time: ${DateFormat('MMM dd, hh:mm a').format(selectedDate)}',
+                    ),
+                    trailing: const Icon(Icons.access_time_rounded),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now().subtract(
+                          const Duration(days: 30),
+                        ),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(selectedDate),
+                        );
+                        if (time != null) {
+                          setModalState(() {
+                            selectedDate = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (titleController.text.isNotEmpty) {
+                        reminder.title = titleController.text;
+                        reminder.dateTime = selectedDate;
+
+                        final key = box.keys.firstWhere(
+                          (k) =>
+                              Reminder.fromMap(
+                                Map<dynamic, dynamic>.from(box.get(k)),
+                              ).id ==
+                              reminder.id,
+                        );
+                        await box.put(key, reminder.toMap());
+                        await NotificationService().scheduleReminder(reminder);
+
+                        if (context.mounted) Navigator.pop(context);
+                        setState(() {});
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: const Text('Update Reminder'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -481,11 +483,15 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const SizedBox(width: 48), // Spacer to center title
-                Text(
-                  'Our Journey',
-                  style: GoogleFonts.outfit(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Text(
+                    'Our Journey',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 _buildTimelineHeaderActions(context),
@@ -742,22 +748,20 @@ class _ContentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 8,
+              runSpacing: 4,
               children: [
-                Expanded(
-                  child: Text(
-                    DateFormat('MMM dd, yyyy').format(event.date),
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSub,
-                    ),
+                Text(
+                  DateFormat('MMM dd, yyyy').format(event.date),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSub,
                   ),
                 ),
                 if (dayCount != null) ...[
-                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -782,6 +786,8 @@ class _ContentCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               event.title,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.outfit(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

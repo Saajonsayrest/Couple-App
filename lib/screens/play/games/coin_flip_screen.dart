@@ -82,151 +82,167 @@ class _CoinFlipScreenState extends State<CoinFlipScreen>
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Spacer(),
-                  Text(
-                    'HEADS OR TAILS?',
-                    style: GoogleFonts.varelaRound(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMain,
+                  Expanded(
+                    child: Text(
+                      'HEADS OR TAILS?',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.varelaRound(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMain,
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   const SizedBox(width: 48), // Balance
                 ],
               ),
             ),
 
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Instruction
-                  Text(
-                    _isSpinning
-                        ? 'Waiting for destiny...'
-                        : 'Ready for a flip? ✨',
-                    style: GoogleFonts.varelaRound(
-                      fontSize: 18,
-                      color: AppColors.textSub,
-                    ),
-                  ).animate(target: _isSpinning ? 1 : 0).fadeOut(),
-
-                  const SizedBox(height: 40),
-
-                  // The Coin
-                  GestureDetector(
-                    onTap: _flipCoin,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Floating hearts when spinning
-                        if (_isSpinning)
-                          ...List.generate(6, (index) {
-                            return Icon(
-                                  Icons.favorite_rounded,
-                                  color: Colors.pink.withOpacity(0.4),
-                                  size: 20 + (index * 4).toDouble(),
-                                )
-                                .animate(
-                                  onPlay: (controller) => controller.repeat(),
-                                )
-                                .moveY(
-                                  begin: 0,
-                                  end: -200 - (index * 20),
-                                  duration: 1.5.seconds + (index * 200).ms,
-                                )
-                                .fade(begin: 0.8, end: 0)
-                                .slideX(
-                                  begin: 0,
-                                  end: (index % 2 == 0 ? 0.3 : -0.3),
-                                );
-                          }),
-
-                        AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, child) {
-                            final rotationValue = _controller.value * 8 * pi;
-                            final translateY =
-                                sin(_controller.value * pi) * -150.0;
-
-                            return Transform(
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.001)
-                                ..translate(0.0, translateY)
-                                ..rotateX(rotationValue),
-                              alignment: Alignment.center,
-                              child: _buildToken(),
-                            );
-                          },
+              child: Center(
+                // Clip.none keeps the flying coin / hearts visible while tossing.
+                child: SingleChildScrollView(
+                  clipBehavior: Clip.none,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Instruction
+                      Text(
+                        _isSpinning
+                            ? 'Waiting for destiny...'
+                            : 'Ready for a flip? ✨',
+                        style: GoogleFonts.varelaRound(
+                          fontSize: 18,
+                          color: AppColors.textSub,
                         ),
-                      ],
-                    ),
+                      ).animate(target: _isSpinning ? 1 : 0).fadeOut(),
+
+                      const SizedBox(height: 40),
+
+                      // The Coin
+                      GestureDetector(
+                        onTap: _flipCoin,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Floating hearts when spinning
+                            if (_isSpinning)
+                              ...List.generate(6, (index) {
+                                return Icon(
+                                      Icons.favorite_rounded,
+                                      color: Colors.pink.withOpacity(0.4),
+                                      size: 20 + (index * 4).toDouble(),
+                                    )
+                                    .animate(
+                                      onPlay: (controller) =>
+                                          controller.repeat(),
+                                    )
+                                    .moveY(
+                                      begin: 0,
+                                      end: -200 - (index * 20),
+                                      duration: 1.5.seconds + (index * 200).ms,
+                                    )
+                                    .fade(begin: 0.8, end: 0)
+                                    .slideX(
+                                      begin: 0,
+                                      end: (index % 2 == 0 ? 0.3 : -0.3),
+                                    );
+                              }),
+
+                            AnimatedBuilder(
+                              animation: _controller,
+                              builder: (context, child) {
+                                final rotationValue =
+                                    _controller.value * 8 * pi;
+                                final translateY =
+                                    sin(_controller.value * pi) * -150.0;
+
+                                return Transform(
+                                  transform: Matrix4.identity()
+                                    ..setEntry(3, 2, 0.001)
+                                    ..translate(0.0, translateY)
+                                    ..rotateX(rotationValue),
+                                  alignment: Alignment.center,
+                                  child: _buildToken(),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 60),
+
+                      // Result Section
+                      if (!_isSpinning)
+                        Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      _isHeads
+                                          ? 'It\'s HEADS! 🪙'
+                                          : 'It\'s TAILS! 🪙',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.varelaRound(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ).animate().fadeIn().scale(
+                              curve: Curves.elasticOut,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _isHeads
+                                  ? "Destiny has spoken: Heads!"
+                                  : "Fate has decided: Tails!",
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.varelaRound(
+                                fontSize: 16,
+                                color: AppColors.textSub,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ).animate().fadeIn(delay: 400.ms),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Tap the coin to toss again',
+                              style: GoogleFonts.varelaRound(
+                                fontSize: 14,
+                                color: Colors.grey.withOpacity(0.6),
+                              ),
+                            ).animate().fadeIn(delay: 1.seconds),
+                          ],
+                        ),
+                    ],
                   ),
-
-                  const SizedBox(height: 60),
-
-                  // Result Section
-                  if (!_isSpinning)
-                    Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(
-                                  context,
-                                ).primaryColor.withOpacity(0.1),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _isHeads
-                                    ? 'It\'s HEADS! 🪙'
-                                    : 'It\'s TAILS! 🪙',
-                                style: GoogleFonts.varelaRound(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ).animate().fadeIn().scale(curve: Curves.elasticOut),
-                        const SizedBox(height: 16),
-                        Text(
-                          _isHeads
-                              ? "Destiny has spoken: Heads!"
-                              : "Fate has decided: Tails!",
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.varelaRound(
-                            fontSize: 16,
-                            color: AppColors.textSub,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ).animate().fadeIn(delay: 400.ms),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Tap the coin to toss again',
-                          style: GoogleFonts.varelaRound(
-                            fontSize: 14,
-                            color: Colors.grey.withOpacity(0.6),
-                          ),
-                        ).animate().fadeIn(delay: 1.seconds),
-                      ],
-                    ),
-                ],
+                ),
               ),
             ),
 
@@ -261,11 +277,14 @@ class _CoinFlipScreenState extends State<CoinFlipScreen>
                             ),
                             elevation: 5,
                           ),
-                          child: Text(
-                            _isSpinning ? 'TOSSING...' : 'TOSS COIN',
-                            style: GoogleFonts.varelaRound(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              _isSpinning ? 'TOSSING...' : 'TOSS COIN',
+                              style: GoogleFonts.varelaRound(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         )

@@ -49,37 +49,7 @@ class ProfileNotifier extends StateNotifier<List<UserProfile>> {
 
     // Schedule Special Events
     try {
-      final notifService = NotificationService();
-
-      // Anniversary
-      if (me.relationshipStartDate != null) {
-        await notifService.scheduleAnnualEvent(
-          id: 1001,
-          title: 'Happy Anniversary! ❤️',
-          body: 'Another year of love and happiness together! 🥂',
-          date: me.relationshipStartDate!,
-        );
-      }
-
-      final partnerName = partner.nickname.isNotEmpty
-          ? partner.nickname
-          : partner.name;
-
-      // Partner Birthday
-      await notifService.scheduleAnnualEvent(
-        id: 1002,
-        title: 'Happy Birthday $partnerName! 🎂',
-        body: "Today is $partnerName's special day! Make it amazing! 🎉",
-        date: partner.birthday,
-      );
-
-      // My Birthday
-      await notifService.scheduleAnnualEvent(
-        id: 1003,
-        title: 'Happy Birthday to You! 🎂',
-        body: "It's your special day! Hope $partnerName spoils you! 🎁",
-        date: me.birthday,
-      );
+      await NotificationService().scheduleImportantDates(me, partner);
     } catch (e) {
       // In release mode, notification scheduling might fail due to system settings
       // We don't want to block the onboarding/update process because of this

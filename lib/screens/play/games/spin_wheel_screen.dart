@@ -102,295 +102,310 @@ class _SpinWheelScreenState extends State<SpinWheelScreen>
       appBar: AppBar(title: const Text('Spin the Wheel')),
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Category Selector (Horizontal)
-            // Category Selector (2x2 Grid)
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 3.2,
-              children: _categories.entries.map((entry) {
-                final isSelected = _selectedCategory == entry.key;
-                return GestureDetector(
-                  onTap: () => setState(() {
-                    _selectedCategory = entry.key;
-                    _result = '';
-                    _finalAngle = 0;
-                    _baseAngle = 0;
-                    _isSpinning = false;
-                    _selectedIndex = 0;
-                    _controller.reset();
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Theme.of(context).primaryColor
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        if (isSelected)
-                          BoxShadow(
-                            color: Theme.of(
-                              context,
-                            ).primaryColor.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
+        // Scrolls (instead of overflowing) when the screen is too short for the
+        // grid + wheel + result + button; wheel keeps at least ~680dp of layout.
+        child: LayoutBuilder(
+          builder: (context, viewport) => SingleChildScrollView(
+            child: SizedBox(
+              height: max(viewport.maxHeight, 680),
+              child: Column(
+                children: [
+                  // Category Selector (Horizontal)
+                  // Category Selector (2x2 Grid)
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 3.2,
+                    children: _categories.entries.map((entry) {
+                      final isSelected = _selectedCategory == entry.key;
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedCategory = entry.key;
+                          _result = '';
+                          _finalAngle = 0;
+                          _baseAngle = 0;
+                          _isSpinning = false;
+                          _selectedIndex = 0;
+                          _controller.reset();
+                        }),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Theme.of(context).primaryColor
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              if (isSelected)
+                                BoxShadow(
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                            ],
+                            border: Border.all(
+                              color: isSelected
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.grey.withOpacity(0.2),
+                            ),
                           ),
-                      ],
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(context).primaryColor
-                            : Colors.grey.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        entry.value,
-                        style: GoogleFonts.varelaRound(
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.grey.shade700,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                entry.value,
+                                style: GoogleFonts.varelaRound(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Responsive Wheel
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final wheelSize = min(
+                          constraints.maxWidth,
+                          constraints.maxHeight,
+                        );
+                        final radius = wheelSize * 0.38;
+                        final centerSize = wheelSize * 0.2;
+                        final roseSize = wheelSize * 0.12;
+
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Options around the wheel
+                            ...List.generate(options.length, (index) {
+                              final angle =
+                                  (2 * pi * index / options.length) - pi / 2;
+                              final x = radius * cos(angle);
+                              final y = radius * sin(angle);
+
+                              return Transform.translate(
+                                offset: Offset(x, y),
+                                child: Container(
+                                  width: 85,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color:
+                                          (_result.isNotEmpty &&
+                                              _selectedIndex >= 0 &&
+                                              index == _selectedIndex)
+                                          ? Theme.of(context).primaryColor
+                                          : Theme.of(
+                                              context,
+                                            ).primaryColor.withOpacity(0.3),
+                                      width:
+                                          (_result.isNotEmpty &&
+                                              _selectedIndex >= 0 &&
+                                              index == _selectedIndex)
+                                          ? 2.5
+                                          : 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    options[index],
+                                    style: GoogleFonts.varelaRound(
+                                      fontSize: 10,
+                                      fontWeight:
+                                          (_result.isNotEmpty &&
+                                              _selectedIndex >= 0 &&
+                                              index == _selectedIndex)
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              );
+                            }),
+
+                            // Center Circle
+                            Container(
+                              width: centerSize,
+                              height: centerSize,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    Theme.of(context).primaryColor,
+                                    Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.6),
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.4),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Spinning Rose Arrow
+                            AnimatedBuilder(
+                              animation: _controller,
+                              builder: (context, child) {
+                                final currentAngle =
+                                    _baseAngle +
+                                    (_controller.value * _finalAngle);
+                                return Transform.rotate(
+                                  angle: currentAngle,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '🌹',
+                                        style: TextStyle(fontSize: roseSize),
+                                      ),
+                                      Container(
+                                        width: 2,
+                                        height: wheelSize * 0.1,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.red.shade400,
+                                              Colors.green.shade700,
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
 
-            // Responsive Wheel
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final wheelSize = min(
-                    constraints.maxWidth,
-                    constraints.maxHeight,
-                  );
-                  final radius = wheelSize * 0.38;
-                  final centerSize = wheelSize * 0.2;
-                  final roseSize = wheelSize * 0.12;
+                  const SizedBox(height: 24),
 
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Options around the wheel
-                      ...List.generate(options.length, (index) {
-                        final angle =
-                            (2 * pi * index / options.length) - pi / 2;
-                        final x = radius * cos(angle);
-                        final y = radius * sin(angle);
-
-                        return Transform.translate(
-                          offset: Offset(x, y),
-                          child: Container(
-                            width: 85,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color:
-                                    (_result.isNotEmpty &&
-                                        _selectedIndex >= 0 &&
-                                        index == _selectedIndex)
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(
-                                        context,
-                                      ).primaryColor.withOpacity(0.3),
-                                width:
-                                    (_result.isNotEmpty &&
-                                        _selectedIndex >= 0 &&
-                                        index == _selectedIndex)
-                                    ? 2.5
-                                    : 1.5,
+                  // Result
+                  if (_result.isNotEmpty)
+                    TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 500),
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      builder: (context, opacity, child) {
+                        return Opacity(
+                          opacity: opacity,
+                          child: Transform.scale(
+                            scale: 0.8 + (0.2 * opacity),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.5),
+                                  width: 1.5,
                                 ),
-                              ],
-                            ),
-                            child: Text(
-                              options[index],
-                              style: GoogleFonts.varelaRound(
-                                fontSize: 10,
-                                fontWeight:
-                                    (_result.isNotEmpty &&
-                                        _selectedIndex >= 0 &&
-                                        index == _selectedIndex)
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: Theme.of(context).primaryColor,
                               ),
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '🎉 Result',
+                                    style: GoogleFonts.varelaRound(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _result,
+                                    style: GoogleFonts.varelaRound(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
-                      }),
+                      },
+                    ),
 
-                      // Center Circle
-                      Container(
-                        width: centerSize,
-                        height: centerSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              Theme.of(context).primaryColor,
-                              Theme.of(context).primaryColor.withOpacity(0.6),
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
+                  const SizedBox(height: 24),
+
+                  // Spin Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _spin,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: _isSpinning
+                            ? Theme.of(context).primaryColor.withOpacity(0.8)
+                            : null,
                       ),
-
-                      // Spinning Rose Arrow
-                      AnimatedBuilder(
-                        animation: _controller,
-                        builder: (context, child) {
-                          final currentAngle =
-                              _baseAngle + (_controller.value * _finalAngle);
-                          return Transform.rotate(
-                            angle: currentAngle,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '🌹',
-                                  style: TextStyle(fontSize: roseSize),
-                                ),
-                                Container(
-                                  width: 2,
-                                  height: wheelSize * 0.1,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.red.shade400,
-                                        Colors.green.shade700,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Result
-            if (_result.isNotEmpty)
-              TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 500),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, opacity, child) {
-                  return Opacity(
-                    opacity: opacity,
-                    child: Transform.scale(
-                      scale: 0.8 + (0.2 * opacity),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(
-                            color: Theme.of(
-                              context,
-                            ).primaryColor.withOpacity(0.5),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              '🎉 Result',
-                              style: GoogleFonts.varelaRound(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _result,
-                              style: GoogleFonts.varelaRound(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                      child: Text(
+                        _isSpinning ? 'SPINNING...' : 'SPIN!',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
-
-            const SizedBox(height: 24),
-
-            // Spin Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _spin,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: _isSpinning
-                      ? Theme.of(context).primaryColor.withOpacity(0.8)
-                      : null,
-                ),
-                child: Text(
-                  _isSpinning ? 'SPINNING...' : 'SPIN!',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
                   ),
-                ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
       ),
     );

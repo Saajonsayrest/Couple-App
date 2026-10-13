@@ -52,3 +52,9 @@ android/app/upload-keystore.jks
 android/gradle/wrapper/dists/
 android/gradle-user-home/
 
+# Book pages stay local: copyrighted, and this repo is public.
+assets/books/
+
+# Local AI work notes
+.ai-brain/
+

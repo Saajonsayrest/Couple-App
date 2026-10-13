@@ -26,7 +26,7 @@ class MiniCoupleCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      height: 150,
+      constraints: const BoxConstraints(minHeight: 150),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(36),
@@ -99,14 +99,17 @@ class MiniCoupleCard extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  '$days',
-                  style: GoogleFonts.quicksand(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w800,
-                    color: theme.primaryColor,
-                    height: 1,
-                    letterSpacing: -2,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$days',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w800,
+                      color: theme.primaryColor,
+                      height: 1,
+                      letterSpacing: -2,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 2),

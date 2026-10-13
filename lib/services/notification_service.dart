@@ -1,10 +1,9 @@
-import 'dart:math';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import '../data/models/reminder.dart';
-import '../data/game_data.dart';
+import '../data/models/user_profile.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -55,81 +54,82 @@ class NotificationService {
 
     await _notificationsPlugin.initialize(initSettings);
 
-    // Create Love Quotes channel for Android
-    final androidPlugin = _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-
-    await androidPlugin?.createNotificationChannel(
-      const AndroidNotificationChannel(
-        'daily_quotes_channel',
-        'Daily Love Quotes',
-        description: 'Morning love quotes for your partner',
-        importance: Importance.low, // Silent by default
-        playSound: false,
-        enableVibration: false,
-        showBadge: false,
-      ),
-    );
-
-    // Automatically schedule quotes on init
-    await scheduleDailyQuoteNotification();
+    await _cancelDailyQuotes();
   }
 
-  Future<void> scheduleDailyQuoteNotification() async {
-    final now = tz.TZDateTime.now(tz.local);
-    final random = Random();
-    final quotes = GameData.coupleQuotes;
+  // Daily 6 AM love quotes were turned off as too frequent. Older builds
+  // queued them a week ahead (ids 9000-9006), so clear any still pending.
+  Future<void> _cancelDailyQuotes() async {
+    for (int id = 9000; id <= 9006; id++) {
+      await _notificationsPlugin.cancel(id);
+    }
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.deleteNotificationChannel('daily_quotes_channel');
+  }
 
-    for (int i = 0; i < 7; i++) {
-      tz.TZDateTime scheduledDate = tz.TZDateTime(
-        tz.local,
-        now.year,
-        now.month,
-        now.day,
-        6, // 6 AM
-        0,
-        0,
-      ).add(Duration(days: i));
+  /// Alerts that must never be missed: anniversary, both birthdays, New Year
+  /// and the first of every month. Fixed ids, so calling this again just
+  /// reschedules.
+  Future<void> scheduleImportantDates(
+    UserProfile me,
+    UserProfile partner,
+  ) async {
+    // Anniversary
+    if (me.relationshipStartDate != null) {
+      await scheduleAnnualEvent(
+        id: 1001,
+        title: 'Happy Anniversary! ❤️',
+        body: 'Another year of love and happiness together! 🥂',
+        date: me.relationshipStartDate!,
+      );
+    }
 
-      // If scheduled time has already passed today, don't schedule for today
-      if (scheduledDate.isBefore(now)) {
-        continue;
-      }
+    final partnerName = partner.nickname.isNotEmpty
+        ? partner.nickname
+        : partner.name;
 
-      // Use a consistent ID range for daily quotes (e.g., 9000-9006)
-      final id = 9000 + i;
+    // Partner Birthday
+    await scheduleAnnualEvent(
+      id: 1002,
+      title: 'Happy Birthday $partnerName! 🎂',
+      body: "Today is $partnerName's special day! Make it amazing! 🎉",
+      date: partner.birthday,
+    );
 
-      // Select a truly random quote
-      final quote = quotes[random.nextInt(quotes.length)];
+    // My Birthday
+    await scheduleAnnualEvent(
+      id: 1003,
+      title: 'Happy Birthday to You! 🎂',
+      body: "It's your special day! Hope $partnerName spoils you! 🎁",
+      date: me.birthday,
+    );
 
-      await _notificationsPlugin.zonedSchedule(
-        id,
-        'Good Morning! ❤️',
-        quote,
-        scheduledDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_quotes_channel',
-            'Daily Love Quotes',
-            channelDescription: 'Morning love quotes for your partner',
-            importance: Importance.low,
-            priority: Priority.low,
-            playSound: false,
-            enableVibration: false,
-            styleInformation: BigTextStyleInformation(''),
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: false,
-            presentSound: false, // Silent
-            interruptionLevel: InterruptionLevel.passive, // Less intrusive
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+    // New Year
+    await scheduleAnnualEvent(
+      id: 1004,
+      title: 'Happy New Year! 🎆',
+      body:
+          'Another year together with $partnerName. Here’s to the best one yet! 🥂',
+      date: DateTime(2000, 1, 1),
+    );
+
+    // First of every month. January is covered by New Year above, so these
+    // are 11 yearly alerts (ids 1102-1112) rather than one monthly repeat
+    // that would double up on 1 January.
+    const months = [
+      'February', 'March', 'April', 'May', 'June', 'July', //
+      'August', 'September', 'October', 'November', 'December',
+    ];
+    for (int month = 2; month <= 12; month++) {
+      await scheduleAnnualEvent(
+        id: 1100 + month,
+        title: 'Hello, ${months[month - 2]}! 🌸',
+        body:
+            'A fresh month with $partnerName. Plan something sweet together! 💕',
+        date: DateTime(2000, month, 1),
       );
     }
   }

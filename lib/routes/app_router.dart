@@ -10,6 +10,7 @@ import '../screens/settings/settings_screen.dart';
 import '../screens/settings/edit_profile_screen.dart';
 import '../screens/debug/widget_debug_screen.dart';
 import '../screens/main_screen.dart';
+import '../screens/reader/book_reader_screen.dart';
 
 import '../screens/play/games/truth_or_dare_screen.dart';
 import '../screens/play/games/coin_flip_screen.dart';
@@ -45,6 +46,10 @@ final router = GoRouter(
       builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(path: '/', builder: (context, state) => const MainScreen()),
+    GoRoute(
+      path: '/reader',
+      builder: (context, state) => const BookReaderScreen(),
+    ),
     GoRoute(
       path: '/timeline',
       builder: (context, state) => const TimelineScreen(),

@@ -17,6 +17,7 @@ import '../../services/notification_service.dart';
 import '../../widgets/liquid_background.dart';
 import '../../providers/profile_provider.dart';
 import '../../core/globals.dart';
+import '../reader/book_reader_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -145,7 +146,12 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ).animate().fadeIn(delay: 400.ms),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+
+              // Cozy Book Corner Card
+              _buildCozyBookCornerCard(context),
+
+              const SizedBox(height: 28),
 
               // Reminders Section
               _buildRemindersSection(context),
@@ -178,6 +184,168 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCozyBookCornerCard(BuildContext context) {
+    final settingsBox = Hive.box(AppConstants.settingsBox);
+
+    return ValueListenableBuilder(
+      valueListenable: settingsBox.listenable(
+        keys: const [BookReaderKeys.currentPage, BookReaderKeys.visualMode],
+      ),
+      builder: (context, Box box, _) {
+        final rawPage = box.get(
+          BookReaderKeys.currentPage,
+          defaultValue: BookReaderKeys.defaultStartPage,
+        );
+        final currentPage =
+            (rawPage is int ? rawPage : BookReaderKeys.defaultStartPage).clamp(
+              1,
+              BookReaderKeys.totalPages,
+            );
+        final progress = currentPage / BookReaderKeys.totalPages;
+        final rawMode = box.get(
+          BookReaderKeys.visualMode,
+          defaultValue: ReaderVisualMode.matcha.name,
+        );
+        String modeLabel = 'Matcha Cozy';
+        if (rawMode == ReaderVisualMode.bw.name) {
+          modeLabel = 'B/W Peace';
+        } else if (rawMode == ReaderVisualMode.lowBlueLight.name) {
+          modeLabel = 'Low Blue Light';
+        }
+
+        return GestureDetector(
+          onTap: () => context.push('/reader'),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFEDF5EA), Color(0xFFDCEAD6)],
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: const Color(0xFF6B9B74).withValues(alpha: 0.35),
+                width: 1.8,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF5D8A66).withValues(alpha: 0.14),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Mini Book Cover Preview
+                Container(
+                  width: 56,
+                  height: 76,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset(
+                    BookReaderKeys.pageAssetPath(1),
+                    fit: BoxFit.cover,
+                    // Decode a thumbnail, not the full 2164px page.
+                    cacheWidth: (56 * MediaQuery.devicePixelRatioOf(context))
+                        .round(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.spa_rounded,
+                            size: 15,
+                            color: Color(0xFF4F7A57),
+                          ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              'COZY READING CORNER',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.quicksand(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.6,
+                                color: const Color(0xFF4F7A57),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Too Good To Be True',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF233325),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Page $currentPage of ${BookReaderKeys.totalPages}  •  $modeLabel',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF4F6652),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 6,
+                          backgroundColor: const Color(
+                            0xFF5D8A66,
+                          ).withValues(alpha: 0.18),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFF5D8A66),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5D8A66),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.menu_book_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ).animate().fadeIn(delay: 450.ms).slideY(begin: 0.08, end: 0);
+      },
     );
   }
 
@@ -293,13 +461,17 @@ class HomeScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
         children: [
-          Text(
-            title,
-            style: GoogleFonts.quicksand(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textMain,
-              letterSpacing: -0.5,
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.quicksand(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMain,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -360,40 +532,53 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      event.title,
-                      style: GoogleFonts.quicksand(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.textMain,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: event.color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        relativeTime,
+                // Wrap, not Row: on narrow screens the badge drops below the
+                // title instead of splitting words. Full width so
+                // spaceBetween still pins the badge right when it fits.
+                SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        event.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.quicksand(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: event.color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppColors.textMain,
                         ),
                       ),
-                    ),
-                  ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: event.color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          relativeTime,
+                          style: GoogleFonts.quicksand(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: event.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   event.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.quicksand(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -419,7 +604,7 @@ class HomeScreen extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSectionHeader('Our Reminders', '🔔'),
+              Expanded(child: _buildSectionHeader('Our Reminders', '🔔')),
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -514,6 +699,8 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 Text(
                   reminder.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.quicksand(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -643,6 +830,7 @@ class HomeScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Remove Reminder?',
@@ -705,127 +893,131 @@ class HomeScreen extends ConsumerWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  reminderToEdit == null
-                      ? 'Set a Reminder 🔔'
-                      : 'Edit Reminder 📝',
-                  style: GoogleFonts.varelaRound(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMain,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'What to remind?',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    'Time: ${DateFormat('MMM dd, hh:mm a').format(selectedDate)}',
-                  ),
-                  trailing: const Icon(Icons.access_time_rounded),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (date != null) {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(selectedDate),
-                      );
-                      if (time != null) {
-                        setModalState(() {
-                          selectedDate = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time.hour,
-                            time.minute,
-                          );
-                        });
-                      }
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (titleController.text.isNotEmpty) {
-                      final box = Hive.box(AppConstants.remindersBox);
-
-                      if (reminderToEdit == null) {
-                        final reminder = Reminder(
-                          id: const Uuid().v4(),
-                          title: titleController.text,
-                          dateTime: selectedDate,
-                        );
-                        await box.add(reminder.toMap());
-                        await NotificationService().scheduleReminder(reminder);
-
-                        scaffoldMessengerKey.currentState?.showSnackBar(
-                          const SnackBar(
-                            content: Text('Reminder Scheduled! 🔔'),
-                            duration: Duration(milliseconds: 1500),
-                          ),
-                        );
-                      } else {
-                        reminderToEdit.title = titleController.text;
-                        reminderToEdit.dateTime = selectedDate;
-
-                        final key = box.keys.firstWhere(
-                          (k) =>
-                              Reminder.fromMap(
-                                Map<dynamic, dynamic>.from(box.get(k)),
-                              ).id ==
-                              reminderToEdit.id,
-                        );
-                        await box.put(key, reminderToEdit.toMap());
-                        await NotificationService().scheduleReminder(
-                          reminderToEdit,
-                        );
-
-                        scaffoldMessengerKey.currentState?.showSnackBar(
-                          const SnackBar(
-                            content: Text('Reminder Updated! ✨'),
-                            duration: Duration(milliseconds: 1500),
-                          ),
-                        );
-                      }
-
-                      if (context.mounted) Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: Text(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
                     reminderToEdit == null
-                        ? 'Save Reminder'
-                        : 'Update Reminder',
+                        ? 'Set a Reminder 🔔'
+                        : 'Edit Reminder 📝',
+                    style: GoogleFonts.varelaRound(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMain,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'What to remind?',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      'Time: ${DateFormat('MMM dd, hh:mm a').format(selectedDate)}',
+                    ),
+                    trailing: const Icon(Icons.access_time_rounded),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(selectedDate),
+                        );
+                        if (time != null) {
+                          setModalState(() {
+                            selectedDate = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (titleController.text.isNotEmpty) {
+                        final box = Hive.box(AppConstants.remindersBox);
+
+                        if (reminderToEdit == null) {
+                          final reminder = Reminder(
+                            id: const Uuid().v4(),
+                            title: titleController.text,
+                            dateTime: selectedDate,
+                          );
+                          await box.add(reminder.toMap());
+                          await NotificationService().scheduleReminder(
+                            reminder,
+                          );
+
+                          scaffoldMessengerKey.currentState?.showSnackBar(
+                            const SnackBar(
+                              content: Text('Reminder Scheduled! 🔔'),
+                              duration: Duration(milliseconds: 1500),
+                            ),
+                          );
+                        } else {
+                          reminderToEdit.title = titleController.text;
+                          reminderToEdit.dateTime = selectedDate;
+
+                          final key = box.keys.firstWhere(
+                            (k) =>
+                                Reminder.fromMap(
+                                  Map<dynamic, dynamic>.from(box.get(k)),
+                                ).id ==
+                                reminderToEdit.id,
+                          );
+                          await box.put(key, reminderToEdit.toMap());
+                          await NotificationService().scheduleReminder(
+                            reminderToEdit,
+                          );
+
+                          scaffoldMessengerKey.currentState?.showSnackBar(
+                            const SnackBar(
+                              content: Text('Reminder Updated! ✨'),
+                              duration: Duration(milliseconds: 1500),
+                            ),
+                          );
+                        }
+
+                        if (context.mounted) Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: Text(
+                      reminderToEdit == null
+                          ? 'Save Reminder'
+                          : 'Update Reminder',
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

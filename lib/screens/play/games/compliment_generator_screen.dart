@@ -44,37 +44,45 @@ class _ComplimentGeneratorScreenState extends State<ComplimentGeneratorScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).primaryColor.withOpacity(0.2),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text('💌', style: const TextStyle(fontSize: 60)),
-                    const SizedBox(height: 24),
-                    Text(
-                      _compliment,
-                      style: GoogleFonts.caveat(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+              // Card scrolls if the compliment is long / text is large
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    clipBehavior: Clip.none,
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withOpacity(0.2),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
+                      child: Column(
+                        children: [
+                          Text('💌', style: const TextStyle(fontSize: 60)),
+                          const SizedBox(height: 24),
+                          Text(
+                            _compliment,
+                            style: GoogleFonts.caveat(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-              const Spacer(),
               Text(
                 'Share this with your partner 💕',
                 style: GoogleFonts.varelaRound(
